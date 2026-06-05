@@ -6,7 +6,10 @@ import {
   CalendarDays
 } from "lucide-react";
 
-export default function Navbar() {
+export default function Navbar({
+  title = "Dashboard",
+  subtitle = "Monitoring dan Kontrol Sistem Hidroponik"
+}) {
 
   const [currentTime, setCurrentTime] =
     useState(new Date());
@@ -68,12 +71,12 @@ export default function Navbar() {
         <div className="px-5 flex flex-col justify-center">
 
           <h1 className="text-2xl font-bold">
-            Dashboard
+            {title}
           </h1>
 
-          <p className="text-sm text-slate-500">
-            Monitoring dan Kontrol Sistem Hidroponik
-          </p>
+         <p className="text-sm text-slate-500">
+          {subtitle}
+        </p>
 
         </div>
 
