@@ -396,7 +396,7 @@ export default function Monitoring() {
           <td className="border border-slate-300 p-3 text-center">66</td>
           <td className="border border-slate-300 p-3 text-center">500</td>
           <td className="border border-slate-300 p-3 text-center">76</td>
-          <td className="border border-slate-300 p-3 text-center">76</td>n
+          <td className="border border-slate-300 p-3 text-center">76</td>
         </tr>
       </tbody>
     </table>
