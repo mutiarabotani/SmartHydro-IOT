@@ -18,15 +18,18 @@ import {
   Sun,
   Waves
 } from "lucide-react";
-
 export default function Monitoring() {
-    const chartData = [
-  { waktu: "09:40", nilai: 5.81 },
-  { waktu: "09:45", nilai: 5.83 },
-  { waktu: "09:50", nilai: 5.84 },
-  { waktu: "09:55", nilai: 5.82 },
-  { waktu: "10:00", nilai: 5.86 }
-];
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const chartData = [
+    { waktu: "09:40", nilai: 5.81 },
+    { waktu: "09:45", nilai: 5.83 },
+    { waktu: "09:50", nilai: 5.84 },
+    { waktu: "09:55", nilai: 5.82 },
+    { waktu: "10:00", nilai: 5.86 }
+  ];
+
   return (
     <div className="flex min-h-screen bg-slate-100">
       <Sidebar />
@@ -47,10 +50,12 @@ export default function Monitoring() {
 
             <div className="flex items-center gap-3">
               <span className="font-medium">
-                Periode
+                Tanggal
               </span>
 
-              <select
+              <input
+                type="date"
+                defaultValue={today}
                 className="
                 border
                 border-slate-300
@@ -59,14 +64,9 @@ export default function Monitoring() {
                 py-2
                 bg-white
                 "
-              >
-                <option>Hari Ini</option>
-                <option>Minggu Ini</option>
-                <option>Bulan Ini</option>
-              </select>
+              />
             </div>
           </div>
-
           {/* CARD SENSOR */}
           <div className="grid grid-cols-6 gap-4 mb-6">
 
@@ -350,6 +350,7 @@ export default function Monitoring() {
           <td className="border border-slate-300 p-3 text-center">68</td>
           <td className="border border-slate-300 p-3 text-center">520</td>
           <td className="border border-slate-300 p-3 text-center">78</td>
+          <td className="border border-slate-300 p-3 text-center">90</td>
         </tr>
 
         <tr>
@@ -360,6 +361,7 @@ export default function Monitoring() {
           <td className="border border-slate-300 p-3 text-center">67</td>
           <td className="border border-slate-300 p-3 text-center">515</td>
           <td className="border border-slate-300 p-3 text-center">77</td>
+           <td className="border border-slate-300 p-3 text-center">77</td>
         </tr>
 
         <tr>
@@ -369,6 +371,7 @@ export default function Monitoring() {
           <td className="border border-slate-300 p-3 text-center">24.6</td>
           <td className="border border-slate-300 p-3 text-center">68</td>
           <td className="border border-slate-300 p-3 text-center">510</td>
+          <td className="border border-slate-300 p-3 text-center">77</td>
           <td className="border border-slate-300 p-3 text-center">77</td>
         </tr>
 
@@ -380,6 +383,9 @@ export default function Monitoring() {
           <td className="border border-slate-300 p-3 text-center">67</td>
           <td className="border border-slate-300 p-3 text-center">505</td>
           <td className="border border-slate-300 p-3 text-center">76</td>
+          <td className="border border-slate-300 p-3 text-center">76</td>
+          
+
         </tr>
 
         <tr>
@@ -390,6 +396,7 @@ export default function Monitoring() {
           <td className="border border-slate-300 p-3 text-center">66</td>
           <td className="border border-slate-300 p-3 text-center">500</td>
           <td className="border border-slate-300 p-3 text-center">76</td>
+          <td className="border border-slate-300 p-3 text-center">76</td>n
         </tr>
       </tbody>
     </table>
