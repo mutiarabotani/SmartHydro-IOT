@@ -81,6 +81,8 @@ export default function Sidebar() {
         <MenuItem
           icon={<Brain size={22} />}
           text="AI Prediction"
+          active={location.pathname === "/ai-prediction"}
+          onClick={() => navigate("/ai-prediction")}
         />
 
         <MenuItem
