@@ -11,7 +11,6 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Sidebar() {
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,32 +19,31 @@ export default function Sidebar() {
       className="
       w-[220px]
       min-h-screen
-      bg-white
+      bg-slate-900
+      text-white
       border-r
-      border-slate-300
+      border-slate-700
       "
     >
-
       {/* HEADER */}
 
       <div
         className="
         h-[70px]
         border-b
-        border-slate-300
+        border-slate-700
         flex
         items-center
         px-3
         gap-3
         "
       >
-
         <div
           className="
           w-12
           h-12
           border
-          border-slate-400
+          border-slate-600
           flex
           items-center
           justify-center
@@ -54,16 +52,14 @@ export default function Sidebar() {
           <Leaf size={24} />
         </div>
 
-        <h1 className="font-bold text-lg text-slate-800">
+        <h1 className="font-bold text-lg">
           SmartHydro-AI
         </h1>
-
       </div>
 
       {/* MENU */}
 
       <div>
-
         <MenuItem
           icon={<LayoutDashboard size={22} />}
           text="Dashboard"
@@ -97,9 +93,7 @@ export default function Sidebar() {
           icon={<Settings size={22} />}
           text="Setting"
         />
-
       </div>
-
     </div>
   );
 }
@@ -110,7 +104,6 @@ function MenuItem({
   active,
   onClick
 }) {
-
   return (
     <div
       onClick={onClick}
@@ -121,23 +114,22 @@ function MenuItem({
       gap-3
       px-6
       border-b
-      border-slate-300
+      border-slate-700
       cursor-pointer
+      transition-all
 
       ${
         active
-          ? "bg-slate-200 font-semibold"
-          : "hover:bg-slate-100"
+          ? "bg-green-600 text-white font-semibold"
+          : "hover:bg-slate-800"
       }
       `}
     >
-
       {icon}
 
       <span className="text-base">
         {text}
       </span>
-
     </div>
   );
 }

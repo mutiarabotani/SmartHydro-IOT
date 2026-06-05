@@ -10,18 +10,15 @@ export default function Navbar({
   title = "Dashboard",
   subtitle = "Monitoring dan Kontrol Sistem Hidroponik"
 }) {
-
   const [currentTime, setCurrentTime] =
     useState(new Date());
 
   useEffect(() => {
-
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
     return () => clearInterval(timer);
-
   }, []);
 
   const formattedDate =
@@ -42,24 +39,23 @@ export default function Navbar({
     <div
       className="
       bg-white
+      shadow-sm
       border-b
-      border-slate-300
+      border-slate-200
       h-[70px]
       flex
       justify-between
       items-center
       "
     >
-
       {/* KIRI */}
 
       <div className="flex h-full">
-
         <div
           className="
           w-[70px]
           border-r
-          border-slate-300
+          border-slate-200
           flex
           items-center
           justify-center
@@ -69,86 +65,74 @@ export default function Navbar({
         </div>
 
         <div className="px-5 flex flex-col justify-center">
-
           <h1 className="text-2xl font-bold">
             {title}
           </h1>
 
-         <p className="text-sm text-slate-500">
-          {subtitle}
-        </p>
-
+          <p className="text-sm text-slate-500">
+            {subtitle}
+          </p>
         </div>
-
       </div>
 
       {/* KANAN */}
 
       <div className="flex h-full">
-
         <div
           className="
           px-6
           border-l
-          border-slate-300
+          border-slate-200
           flex
           items-center
           gap-2
           "
         >
-
           <Cloud size={18} />
 
           <span className="text-sm">
             IoT Status:
           </span>
 
-          <span className="font-semibold text-green-600">
+          <span className="font-semibold text-green-500">
             Terhubung
           </span>
-
         </div>
 
         <div
           className="
           px-6
           border-l
-          border-slate-300
+          border-slate-200
           flex
           items-center
           gap-2
           "
         >
-
           <Clock3 size={18} />
 
           <span className="text-sm">
             {formattedTime}
           </span>
-
         </div>
 
         <div
           className="
           px-6
           border-l
-          border-slate-300
+          border-slate-200
           flex
           items-center
           gap-2
           "
         >
-
           <CalendarDays size={18} />
 
           <span className="text-sm whitespace-nowrap">
             {formattedDate}
           </span>
-
         </div>
-
       </div>
-
     </div>
   );
 }
