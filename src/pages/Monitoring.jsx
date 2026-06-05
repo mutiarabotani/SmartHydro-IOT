@@ -322,109 +322,78 @@ export default function Monitoring() {
 </div>
 
           
-          {/* RIWAYAT DATA SENSOR */}
-<div className="bg-white rounded-xl border border-slate-200 p-4">
-
-  <h3 className="text-2xl font-semibold mb-4">
+<div className="bg-white rounded-xl border border-slate-300 p-4">
+  <h3 className="text-xl font-semibold mb-4">
     Riwayat Data Sensor
   </h3>
 
-  <div className="overflow-x-auto">
-
-    <table className="w-full border-collapse">
-
-      <thead>
-        <tr className="border-b border-slate-300">
-
-          <th className="p-3 text-center">
-            Waktu
-          </th>
-
-          <th className="p-3 text-center">
-            pH Level
-          </th>
-
-          <th className="p-3 text-center">
-            EC/TDS (mS/cm)
-          </th>
-
-          <th className="p-3 text-center">
-            Suhu °C
-          </th>
-
-          <th className="p-3 text-center">
-            Kelembapan (%)
-          </th>
-
-          <th className="p-3 text-center">
-            Cahaya (Lux)
-          </th>
-
-          <th className="p-3 text-center">
-            Level Air (%)
-          </th>
-
+  <div className="max-h-[280px] overflow-y-auto border border-slate-300 rounded-lg">
+    <table className="w-full border-collapse text-sm">
+      <thead className="sticky top-0 bg-white">
+        <tr>
+          <th className="border border-slate-300 p-3">Waktu</th>
+          <th className="border border-slate-300 p-3">pH Level</th>
+          <th className="border border-slate-300 p-3">EC/TDS (mS/cm)</th>
+          <th className="border border-slate-300 p-3">Suhu °C</th>
+          <th className="border border-slate-300 p-3">Kelembapan (%)</th>
+          <th className="border border-slate-300 p-3">Cahaya (Lux)</th>
+          <th className="border border-slate-300 p-3">Level Air (%)</th>
         </tr>
       </thead>
 
       <tbody>
-
-        <tr className="border-b border-slate-200">
-          <td className="p-3 text-center">10:00</td>
-          <td className="p-3 text-center">5.86</td>
-          <td className="p-3 text-center">1.62</td>
-          <td className="p-3 text-center">24.7</td>
-          <td className="p-3 text-center">68</td>
-          <td className="p-3 text-center">520</td>
-          <td className="p-3 text-center">78</td>
-        </tr>
-
-        <tr className="border-b border-slate-200">
-          <td className="p-3 text-center">09:55</td>
-          <td className="p-3 text-center">5.82</td>
-          <td className="p-3 text-center">1.60</td>
-          <td className="p-3 text-center">24.6</td>
-          <td className="p-3 text-center">67</td>
-          <td className="p-3 text-center">515</td>
-          <td className="p-3 text-center">77</td>
-        </tr>
-
-        <tr className="border-b border-slate-200">
-          <td className="p-3 text-center">09:50</td>
-          <td className="p-3 text-center">5.84</td>
-          <td className="p-3 text-center">1.61</td>
-          <td className="p-3 text-center">24.6</td>
-          <td className="p-3 text-center">68</td>
-          <td className="p-3 text-center">510</td>
-          <td className="p-3 text-center">77</td>
-        </tr>
-
-        <tr className="border-b border-slate-200">
-          <td className="p-3 text-center">09:45</td>
-          <td className="p-3 text-center">5.83</td>
-          <td className="p-3 text-center">1.59</td>
-          <td className="p-3 text-center">24.6</td>
-          <td className="p-3 text-center">67</td>
-          <td className="p-3 text-center">505</td>
-          <td className="p-3 text-center">76</td>
+        <tr>
+          <td className="border border-slate-300 p-3 text-center">10:00</td>
+          <td className="border border-slate-300 p-3 text-center">5.86</td>
+          <td className="border border-slate-300 p-3 text-center">1.62</td>
+          <td className="border border-slate-300 p-3 text-center">24.7</td>
+          <td className="border border-slate-300 p-3 text-center">68</td>
+          <td className="border border-slate-300 p-3 text-center">520</td>
+          <td className="border border-slate-300 p-3 text-center">78</td>
         </tr>
 
         <tr>
-          <td className="p-3 text-center">09:40</td>
-          <td className="p-3 text-center">5.81</td>
-          <td className="p-3 text-center">1.58</td>
-          <td className="p-3 text-center">24.5</td>
-          <td className="p-3 text-center">66</td>
-          <td className="p-3 text-center">500</td>
-          <td className="p-3 text-center">76</td>
+          <td className="border border-slate-300 p-3 text-center">09:55</td>
+          <td className="border border-slate-300 p-3 text-center">5.82</td>
+          <td className="border border-slate-300 p-3 text-center">1.60</td>
+          <td className="border border-slate-300 p-3 text-center">24.6</td>
+          <td className="border border-slate-300 p-3 text-center">67</td>
+          <td className="border border-slate-300 p-3 text-center">515</td>
+          <td className="border border-slate-300 p-3 text-center">77</td>
         </tr>
 
+        <tr>
+          <td className="border border-slate-300 p-3 text-center">09:50</td>
+          <td className="border border-slate-300 p-3 text-center">5.84</td>
+          <td className="border border-slate-300 p-3 text-center">1.61</td>
+          <td className="border border-slate-300 p-3 text-center">24.6</td>
+          <td className="border border-slate-300 p-3 text-center">68</td>
+          <td className="border border-slate-300 p-3 text-center">510</td>
+          <td className="border border-slate-300 p-3 text-center">77</td>
+        </tr>
+
+        <tr>
+          <td className="border border-slate-300 p-3 text-center">09:45</td>
+          <td className="border border-slate-300 p-3 text-center">5.83</td>
+          <td className="border border-slate-300 p-3 text-center">1.59</td>
+          <td className="border border-slate-300 p-3 text-center">24.6</td>
+          <td className="border border-slate-300 p-3 text-center">67</td>
+          <td className="border border-slate-300 p-3 text-center">505</td>
+          <td className="border border-slate-300 p-3 text-center">76</td>
+        </tr>
+
+        <tr>
+          <td className="border border-slate-300 p-3 text-center">09:40</td>
+          <td className="border border-slate-300 p-3 text-center">5.81</td>
+          <td className="border border-slate-300 p-3 text-center">1.58</td>
+          <td className="border border-slate-300 p-3 text-center">24.5</td>
+          <td className="border border-slate-300 p-3 text-center">66</td>
+          <td className="border border-slate-300 p-3 text-center">500</td>
+          <td className="border border-slate-300 p-3 text-center">76</td>
+        </tr>
       </tbody>
-
     </table>
-
   </div>
-
 </div>
 
         </div>
