@@ -8,7 +8,12 @@ import {
   Leaf
 } from "lucide-react";
 
+import { useNavigate } from "react-router-dom";
+
 export default function Sidebar() {
+
+  const navigate = useNavigate();
+
   return (
     <div
       className="
@@ -62,11 +67,13 @@ export default function Sidebar() {
           icon={<LayoutDashboard size={22} />}
           text="Dashboard"
           active
+          onClick={() => navigate("/")}
         />
 
         <MenuItem
           icon={<Activity size={22} />}
           text="Monitoring"
+          onClick={() => navigate("/monitoring")}
         />
 
         <MenuItem
@@ -98,11 +105,13 @@ export default function Sidebar() {
 function MenuItem({
   icon,
   text,
-  active
+  active,
+  onClick
 }) {
 
   return (
     <div
+      onClick={onClick}
       className={`
       h-[56px]
       flex
