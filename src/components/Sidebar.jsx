@@ -8,11 +8,12 @@ import {
   Leaf
 } from "lucide-react";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Sidebar() {
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div
@@ -66,13 +67,14 @@ export default function Sidebar() {
         <MenuItem
           icon={<LayoutDashboard size={22} />}
           text="Dashboard"
-          active
+          active={location.pathname === "/"}
           onClick={() => navigate("/")}
         />
 
         <MenuItem
           icon={<Activity size={22} />}
           text="Monitoring"
+          active={location.pathname === "/monitoring"}
           onClick={() => navigate("/monitoring")}
         />
 

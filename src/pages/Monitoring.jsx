@@ -18,7 +18,31 @@ export default function Monitoring() {
 
         <div className="p-6">
 
-          MONITORING PAGE
+        <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">
+            Monitoring Parameter Hidroponik
+            </h2>
+
+            <div className="flex items-center gap-3">
+            <span className="font-medium">
+                Periode
+            </span>
+
+            <select
+                className="
+                border
+                border-slate-300
+                rounded-lg
+                px-3
+                py-2
+                "
+            >
+                <option>Hari Ini</option>
+                <option>Minggu Ini</option>
+                <option>Bulan Ini</option>
+            </select>
+            </div>
+        </div>
 
         </div>
 
