@@ -14,7 +14,7 @@ export default function AIPrediction() {
     <div className="flex min-h-screen bg-slate-100">
       <Sidebar />
 
-      <div className="flex-1 ml-[220px]">
+      <div className="flex-1">
 
         <Navbar
           title="AI Prediction"
