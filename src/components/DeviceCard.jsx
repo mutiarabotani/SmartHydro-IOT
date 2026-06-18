@@ -1,11 +1,13 @@
-import { ToggleRight } from "lucide-react";
+import { useState } from "react";
 
-export default function DeviceCard({
-  icon,
+function DeviceCard({
   title,
-  status = "Aktif",
-  color = "bg-green-100",
+  icon,
+  color
 }) {
+
+  const [isOn, setIsOn] = useState(true);
+
   return (
     <div
       className="
@@ -39,7 +41,7 @@ export default function DeviceCard({
 
           <h3
             className="
-            text-2xl
+            text-xl
             font-semibold
             border-b
             border-slate-300
@@ -49,22 +51,60 @@ export default function DeviceCard({
             {title}
           </h3>
 
-          <div className="mt-4 flex justify-between items-center">
+          <div className="flex justify-between items-center mt-4">
 
-            <span className="text-xl">
-              {status}
+            <span
+              className={`font-semibold ${
+                isOn
+                  ? "text-green-600"
+                  : "text-red-500"
+              }`}
+            >
+              {isOn ? "Aktif" : "Mati"}
             </span>
 
-            <ToggleRight
-              size={55}
-              className="text-green-500"
-            />
+            {/* SWITCH */}
+
+            <button
+              onClick={() => setIsOn(!isOn)}
+              className={`
+                relative
+                w-14
+                h-8
+                rounded-full
+                transition-all
+                ${
+                  isOn
+                    ? "bg-green-500"
+                    : "bg-slate-300"
+                }
+              `}
+            >
+
+              <div
+                className={`
+                  absolute
+                  top-1
+                  w-6
+                  h-6
+                  rounded-full
+                  bg-white
+                  transition-all
+                  ${
+                    isOn
+                      ? "left-7"
+                      : "left-1"
+                  }
+                `}
+              />
+
+            </button>
 
           </div>
 
-          <div className="mt-4 text-slate-500">
+          <div className="mt-3 text-slate-500 text-sm">
 
-            <p>Terakhir diperbarui:</p>
+            <p>Terakhir diperbarui</p>
 
             <p>10:30 WIB</p>
 
