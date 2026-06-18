@@ -88,8 +88,11 @@ export default function Sidebar() {
         <MenuItem
           icon={<SlidersHorizontal size={22} />}
           text="Device Control"
+          active={location.pathname === "/device-control"}
+          onClick={() => navigate("/device-control")}
         />
 
+  
         <MenuItem
           icon={<ClipboardList size={22} />}
           text="Log"
