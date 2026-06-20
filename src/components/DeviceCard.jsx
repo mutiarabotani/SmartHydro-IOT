@@ -1,12 +1,34 @@
 import { useState } from "react";
 
-function DeviceCard({
+export default function DeviceCard({
   title,
   icon,
-  color
+  color = "bg-green-100",
+  deviceId,
 }) {
-
   const [isOn, setIsOn] = useState(true);
+
+  const toggleDevice = () => {
+    const newStatus = !isOn;
+
+    setIsOn(newStatus);
+
+    console.log(
+      `${deviceId} => ${newStatus ? "ON" : "OFF"}`
+    );
+
+    /*
+    Nanti ganti jadi:
+
+    await axios.post(
+      "http://localhost:5000/api/device",
+      {
+        device: deviceId,
+        status: newStatus
+      }
+    );
+    */
+  };
 
   return (
     <div
@@ -51,50 +73,73 @@ function DeviceCard({
             {title}
           </h3>
 
-          <div className="flex justify-between items-center mt-4">
+          <div className="flex justify-between items-center mt-5">
 
-            <span
-              className={`font-semibold ${
-                isOn
-                  ? "text-green-600"
-                  : "text-red-500"
-              }`}
-            >
-              {isOn ? "Aktif" : "Mati"}
-            </span>
+            <div className="flex items-center gap-2">
+
+              <div
+                className={`
+                w-3
+                h-3
+                rounded-full
+                ${
+                  isOn
+                    ? "bg-green-500"
+                    : "bg-red-500"
+                }
+                `}
+              />
+
+              <span
+                className={`
+                font-semibold
+                ${
+                  isOn
+                    ? "text-green-600"
+                    : "text-red-500"
+                }
+                `}
+              >
+                {isOn ? "ON" : "OFF"}
+              </span>
+
+            </div>
 
             {/* SWITCH */}
 
             <button
-              onClick={() => setIsOn(!isOn)}
+              onClick={toggleDevice}
               className={`
-                relative
-                w-14
-                h-8
-                rounded-full
-                transition-all
-                ${
-                  isOn
-                    ? "bg-green-500"
-                    : "bg-slate-300"
-                }
+              relative
+              w-14
+              h-8
+              rounded-full
+              transition-all
+              duration-300
+              ${
+                isOn
+                  ? "bg-green-500"
+                  : "bg-slate-300"
+              }
               `}
             >
 
               <div
                 className={`
-                  absolute
-                  top-1
-                  w-6
-                  h-6
-                  rounded-full
-                  bg-white
-                  transition-all
-                  ${
-                    isOn
-                      ? "left-7"
-                      : "left-1"
-                  }
+                absolute
+                top-1
+                w-6
+                h-6
+                rounded-full
+                bg-white
+                shadow
+                transition-all
+                duration-300
+                ${
+                  isOn
+                    ? "left-7"
+                    : "left-1"
+                }
                 `}
               />
 
@@ -102,7 +147,7 @@ function DeviceCard({
 
           </div>
 
-          <div className="mt-3 text-slate-500 text-sm">
+          <div className="mt-4 text-sm text-slate-500">
 
             <p>Terakhir diperbarui</p>
 
