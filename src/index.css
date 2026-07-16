@@ -1,8 +1,383 @@
+/*
+ * index.css — tema global SmartHydro-AI (Aqua Lab / Precision Grow)
+ *
+ * Isi file:
+ * 1. @theme     → token warna & font (dipakai class Tailwind seperti bg-hydro-primary)
+ * 2. @layer base→ style dasar html/body, tombol, scrollbar
+ * 3. utilities  → class siap pakai: panel, animasi, sidebar, stagger, dll
+ * 4. @keyframes → definisi animasi modern
+ */
+
 @import "tailwindcss";
 
-body{
-  margin:0;
-  padding:0;
-  background:#f8fafc;
-  font-family: Inter, sans-serif;
+/* ===== Token desain (warna + font) ===== */
+@theme {
+  --font-display: "Sora", sans-serif; /* judul */
+  --font-sans: "IBM Plex Sans", sans-serif; /* teks biasa */
+
+  --color-hydro-ink: #0f1c1a; /* teks utama */
+  --color-hydro-muted: #5a6b66; /* teks sekunder */
+  --color-hydro-primary: #0f6b5c; /* teal utama */
+  --color-hydro-primary-hover: #0c574b;
+  --color-hydro-accent: #2bb8a8; /* aksen aqua */
+  --color-hydro-accent-soft: #d8f3ef; /* latar lembut */
+  --color-hydro-bg: #f3f7f5;
+  --color-hydro-bg2: #e8f1ee;
+  --color-hydro-surface: #ffffff;
+  --color-hydro-border: #c5d5cf;
+  --color-hydro-warn: #d97706;
+  --color-hydro-danger: #c45c5c;
+  --color-hydro-ok: #0f6b5c;
+}
+
+/* ===== Style dasar halaman ===== */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-hydro-ink);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-color: var(--color-hydro-bg);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 0% 0%, rgba(43, 184, 168, 0.12), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(15, 107, 92, 0.08), transparent 50%),
+      linear-gradient(180deg, var(--color-hydro-bg) 0%, var(--color-hydro-bg2) 100%),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 23px,
+        rgba(15, 107, 92, 0.03) 23px,
+        rgba(15, 107, 92, 0.03) 24px
+      );
+    background-attachment: fixed;
+    font-family: var(--font-sans);
+    font-size: 0.925rem;
+    line-height: 1.45;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  button {
+    transition:
+      transform 0.16s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  button:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Scrollbar — tipis, warna lembut */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #b7cdc6 #eef4f1;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #eef4f1;
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #b7cdc6;
+    border-radius: 999px;
+    border: 1px solid #eef4f1;
+    transition: background 0.2s ease;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #95b4aa;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* ===== Utility class yang dipakai di komponen/halaman ===== */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Wrapper layout halaman */
+  .page-shell {
+    background: transparent;
+  }
+
+  /* Kartu/panel kaca putih */
+  .panel {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-hydro-border);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 0 rgba(15, 107, 92, 0.04);
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.28s ease,
+      border-color 0.25s ease;
+  }
+
+  .panel:hover {
+    transform: translateY(-2px);
+    border-color: #a8c4bb;
+    box-shadow: 0 10px 28px rgba(15, 107, 92, 0.08);
+  }
+
+  .status-pulse {
+    animation: hydro-pulse 2.2s ease-in-out infinite;
+  }
+
+  .card-enter {
+    animation: hydro-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .page-enter {
+    animation: hydro-page-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .title-enter {
+    animation: hydro-title-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .toast-enter {
+    animation: hydro-toast-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .backdrop-enter {
+    animation: hydro-backdrop-in 0.25s ease-out both;
+  }
+
+  .value-tick {
+    animation: hydro-tick 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .bar-fill {
+    transform-origin: left center;
+    animation: hydro-bar-fill 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .icon-pop {
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .group:hover .icon-pop,
+  .panel:hover .icon-pop {
+    transform: scale(1.08);
+  }
+
+  .menu-item-motion {
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      padding 0.25s ease,
+      transform 0.2s ease;
+  }
+
+  .menu-item-motion:hover {
+    transform: translateX(2px);
+  }
+
+  .nav-active-bar {
+    position: relative;
+  }
+
+  .nav-active-bar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 999px;
+    background: var(--color-hydro-accent);
+    animation: hydro-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .sidebar-shell {
+    transition:
+      width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .content-stagger > * {
+    animation: hydro-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .content-stagger > *:nth-child(1) { animation-delay: 0.03s; }
+  .content-stagger > *:nth-child(2) { animation-delay: 0.08s; }
+  .content-stagger > *:nth-child(3) { animation-delay: 0.13s; }
+  .content-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+  .content-stagger > *:nth-child(5) { animation-delay: 0.23s; }
+  .content-stagger > *:nth-child(6) { animation-delay: 0.28s; }
+  .content-stagger > *:nth-child(7) { animation-delay: 0.33s; }
+  .content-stagger > *:nth-child(8) { animation-delay: 0.38s; }
+
+  .live-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: var(--color-hydro-accent);
+    animation: hydro-ripple 2s ease-out infinite;
+  }
+}
+
+@keyframes hydro-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes hydro-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hydro-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hydro-title-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes hydro-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes hydro-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hydro-tick {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.65;
+  }
+  60% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes hydro-bar-fill {
+  from {
+    transform: scaleX(0);
+    opacity: 0.5;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes hydro-slide-in {
+  from {
+    transform: scaleY(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes hydro-ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .panel:hover {
+    transform: none;
+  }
 }

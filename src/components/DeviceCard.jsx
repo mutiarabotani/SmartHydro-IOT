@@ -1,162 +1,133 @@
+/**
+ * DeviceCard.jsx — kartu kontrol satu perangkat (pompa, kipas, aktuator).
+ *
+ * Props:
+ * - title      : nama perangkat
+ * - icon       : ikon Lucide
+ * - color      : warna latar ikon
+ * - disabled   : true saat mode AUTO (kontrol manual dikunci)
+ * - initialOn  : status awal ON/OFF
+ *
+ * Saat diklik di mode AUTO → tampil toast peringatan.
+ * Saat MANUAL → toggle ON/OFF + toast sukses + update waktu.
+ */
 import { useState } from "react";
+import { useToast } from "../context/ToastContext";
+
+/** Format jam HH:MM untuk label "Terakhir diperbarui" */
+function formatTime(date) {
+  return date.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function DeviceCard({
   title,
   icon,
-  color = "bg-green-100",
-  deviceId,
+  color = "bg-hydro-accent-soft",
+  disabled = false,
+  initialOn = true,
 }) {
-  const [isOn, setIsOn] = useState(true);
+  const { showToast } = useToast();
+  const [isOn, setIsOn] = useState(initialOn); // status perangkat
+  const [updatedAt, setUpdatedAt] = useState(() => formatTime(new Date()));
 
+  /** Hidupkan / matikan perangkat (simulasi lokal, belum API) */
   const toggleDevice = () => {
+    // Blokir jika sistem masih AUTO
+    if (disabled) {
+      showToast(
+        "Mode AUTO aktif. Ubah ke MANUAL untuk kontrol perangkat.",
+        "warn"
+      );
+      return;
+    }
+
     const newStatus = !isOn;
-
     setIsOn(newStatus);
-
-    console.log(
-      `${deviceId} => ${newStatus ? "ON" : "OFF"}`
+    setUpdatedAt(formatTime(new Date()));
+    showToast(
+      `${title} berhasil ${newStatus ? "dihidupkan" : "dimatikan"}.`,
+      "success"
     );
-
-    /*
-    Nanti ganti jadi:
-
-    await axios.post(
-      "http://localhost:5000/api/device",
-      {
-        device: deviceId,
-        status: newStatus
-      }
-    );
-    */
   };
 
   return (
     <div
-      className="
-      bg-white
-      border
-      border-slate-300
-      p-5
-      "
+      className={`
+      panel p-4 card-enter transition hover:border-hydro-accent
+      ${disabled ? "opacity-80" : ""}
+      `}
     >
-      <div className="flex gap-5">
-
-        {/* ICON */}
-
+      <div className="flex gap-4">
+        {/* Ikon perangkat */}
         <div
           className={`
-          w-24
-          h-24
-          rounded-full
-          flex
-          items-center
-          justify-center
+          w-16 h-16 rounded-xl
+          flex items-center justify-center
+          text-hydro-primary shrink-0 icon-pop
           ${color}
           `}
         >
           {icon}
         </div>
 
-        {/* CONTENT */}
-
-        <div className="flex-1">
-
-          <h3
-            className="
-            text-xl
-            font-semibold
-            border-b
-            border-slate-300
-            pb-2
-            "
-          >
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display text-[0.95rem] font-semibold border-b border-hydro-border pb-1.5 text-hydro-ink">
             {title}
           </h3>
 
-          <div className="flex justify-between items-center mt-5">
-
+          {/* Status ON/OFF + saklar */}
+          <div className="flex justify-between items-center mt-3">
             <div className="flex items-center gap-2">
-
+              {/* Titik indikator hijau (ON) / merah (OFF) */}
               <div
                 className={`
-                w-3
-                h-3
-                rounded-full
-                ${
-                  isOn
-                    ? "bg-green-500"
-                    : "bg-red-500"
-                }
+                w-2.5 h-2.5 rounded-full
+                ${isOn ? "bg-hydro-accent status-pulse" : "bg-hydro-danger"}
                 `}
               />
-
               <span
                 className={`
-                font-semibold
-                ${
-                  isOn
-                    ? "text-green-600"
-                    : "text-red-500"
-                }
+                text-[0.85rem] font-semibold
+                ${isOn ? "text-hydro-primary" : "text-hydro-danger"}
                 `}
               >
                 {isOn ? "ON" : "OFF"}
               </span>
-
             </div>
 
-            {/* SWITCH */}
-
+            {/* Toggle switch */}
             <button
+              type="button"
               onClick={toggleDevice}
+              aria-label={`Toggle ${title}`}
               className={`
-              relative
-              w-14
-              h-8
-              rounded-full
-              transition-all
-              duration-300
-              ${
-                isOn
-                  ? "bg-green-500"
-                  : "bg-slate-300"
-              }
+              relative w-11 h-6 rounded-full transition-all duration-300 cursor-pointer
+              ${isOn ? "bg-hydro-primary" : "bg-hydro-border"}
+              ${disabled ? "cursor-not-allowed" : ""}
               `}
             >
-
+              {/* Knob saklar yang bergeser kiri/kanan */}
               <div
                 className={`
-                absolute
-                top-1
-                w-6
-                h-6
-                rounded-full
-                bg-white
-                shadow
-                transition-all
-                duration-300
-                ${
-                  isOn
-                    ? "left-7"
-                    : "left-1"
-                }
+                absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-300
+                ${isOn ? "left-[22px]" : "left-0.5"}
                 `}
               />
-
             </button>
-
           </div>
 
-          <div className="mt-4 text-sm text-slate-500">
-
+          {/* Info waktu update terakhir */}
+          <div className="mt-3 text-[0.75rem] text-hydro-muted">
             <p>Terakhir diperbarui</p>
-
-            <p>10:30 WIB</p>
-
+            <p>{updatedAt} WIB</p>
+            {disabled && (
+              <p className="text-hydro-warn mt-1">Dikunci mode AUTO</p>
+            )}
           </div>
-
         </div>
-
       </div>
     </div>
   );

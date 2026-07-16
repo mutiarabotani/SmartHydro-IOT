@@ -1,6 +1,16 @@
+/**
+ * DeviceControl.jsx — halaman kendali perangkat hidroponik.
+ *
+ * Fitur:
+ * - Pilih mode AUTO / MANUAL
+ * - Saat AUTO: kartu perangkat terkunci (disabled)
+ * - Saat MANUAL: pengguna bisa toggle ON/OFF tiap aktuator
+ */
+import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import DeviceCard from "../components/DeviceCard";
+import { useToast } from "../context/ToastContext";
 
 import {
   FlaskConical,
@@ -10,128 +20,130 @@ import {
 } from "lucide-react";
 
 export default function DeviceControl() {
-  return (
-    <div className="flex bg-slate-100 min-h-screen">
+  const { showToast } = useToast();
+  // Mode sistem: AUTO = otomatis, MANUAL = kontrol user
+  const [mode, setMode] = useState("AUTO");
 
+  /** Ganti mode + tampilkan notifikasi */
+  const changeMode = (next) => {
+    if (next === mode) return;
+    setMode(next);
+    showToast(
+      next === "AUTO"
+        ? "Mode AUTO aktif. Perangkat dikendalikan otomatis."
+        : "Mode MANUAL aktif. Anda dapat mengontrol perangkat.",
+      "info"
+    );
+  };
+
+  return (
+    // Layout: sidebar kiri + kolom utama (navbar sticky + konten scroll)
+    <div className="flex page-shell h-screen overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+        <Navbar
+          title="Device Control"
+          subtitle="Kendali aktuator dan mode sistem hidroponik"
+        />
 
-        <Navbar />
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 page-enter content-stagger">
 
-        <div className="p-5">
-
-          <h1 className="text-3xl font-bold mb-4">
-            Device Control
-          </h1>
-
-          {/* MODE SISTEM */}
-
-          <div
-            className="
-            bg-white
-            border
-            border-slate-300
-            p-5
-            "
-          >
-
-            <div className="flex justify-between items-center">
-
+          {/* ===== Mode Sistem AUTO / MANUAL ===== */}
+          <div className="panel p-4 card-enter">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
               <div>
-
-                <h2 className="text-2xl font-semibold">
+                <h2 className="font-display text-base font-semibold text-hydro-ink">
                   Mode Sistem
                 </h2>
-
-                <p className="text-slate-500">
+                <p className="text-[0.8rem] text-hydro-muted">
                   Pilih mode pengendalian sistem hidroponik
                 </p>
-
               </div>
 
-              <div className="flex gap-4">
-
+              <div className="flex gap-2.5">
                 <button
-                  className="
-                  px-8
-                  py-4
-                  bg-green-100
-                  border
-                  border-green-500
-                  rounded
-                  font-semibold
-                  "
+                  type="button"
+                  onClick={() => changeMode("AUTO")}
+                  className={`
+                  px-5 py-2 rounded-lg font-medium text-[0.8rem] border cursor-pointer
+                  ${
+                    mode === "AUTO"
+                      ? "bg-hydro-accent-soft border-hydro-primary text-hydro-primary"
+                      : "bg-hydro-bg2 border-hydro-border text-hydro-muted hover:border-hydro-accent"
+                  }
+                  `}
                 >
                   AUTO
                 </button>
 
                 <button
-                  className="
-                  px-8
-                  py-4
-                  bg-slate-100
-                  border
-                  border-slate-400
-                  rounded
-                  font-semibold
-                  "
+                  type="button"
+                  onClick={() => changeMode("MANUAL")}
+                  className={`
+                  px-5 py-2 rounded-lg font-medium text-[0.8rem] border cursor-pointer
+                  ${
+                    mode === "MANUAL"
+                      ? "bg-hydro-accent-soft border-hydro-primary text-hydro-primary"
+                      : "bg-hydro-bg2 border-hydro-border text-hydro-muted hover:border-hydro-accent"
+                  }
+                  `}
                 >
                   MANUAL
                 </button>
-
               </div>
-
             </div>
 
+            {/* Keterangan mode aktif */}
+            <p className="mt-3 text-[0.78rem] text-hydro-muted border-t border-hydro-border pt-3">
+              Status saat ini:{" "}
+              <span className="font-semibold text-hydro-primary">{mode}</span>
+              {mode === "AUTO"
+                ? " — pompa dan aktuator dikendalikan aturan sistem & AI."
+                : " — kontrol perangkat dapat diubah secara manual."}
+            </p>
           </div>
 
-          {/* KONTROL PERANGKAT */}
-
-          <div className="mt-6">
-
-            <h2 className="text-2xl font-semibold mb-4">
+          {/* ===== Grid kartu perangkat ===== */}
+          <div className="mt-4">
+            <h2 className="font-display text-base font-semibold mb-3 text-hydro-ink">
               Kontrol Perangkat
             </h2>
 
-            <div className="grid grid-cols-2 gap-5">
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+              {/* disabled={mode === "AUTO"} → kunci kontrol di mode otomatis */}
               <DeviceCard
-                deviceId="pompa_nutrisi"
                 title="Pompa Nutrisi"
-                icon={<FlaskConical size={42} />}
-                color="bg-green-100"
+                icon={<FlaskConical size={28} />}
+                color="bg-hydro-accent-soft"
+                disabled={mode === "AUTO"}
+                initialOn
               />
-
               <DeviceCard
-                deviceId="pompa_air"
                 title="Pompa Air"
-                icon={<Droplets size={42} />}
-                color="bg-blue-100"
+                icon={<Droplets size={28} />}
+                color="bg-[#d9eef8]"
+                disabled={mode === "AUTO"}
+                initialOn
               />
-
               <DeviceCard
-                deviceId="kipas"
                 title="Kipas"
-                icon={<Fan size={42} />}
-                color="bg-cyan-100"
+                icon={<Fan size={28} />}
+                color="bg-[#d8f0f2]"
+                disabled={mode === "AUTO"}
+                initialOn={false}
               />
-
               <DeviceCard
-                deviceId="aktuator"
                 title="Aktuator"
-                icon={<PlugZap size={42} />}
-                color="bg-purple-100"
+                icon={<PlugZap size={28} />}
+                color="bg-[#e8f0e4]"
+                disabled={mode === "AUTO"}
+                initialOn
               />
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }
