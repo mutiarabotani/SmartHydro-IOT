@@ -213,7 +213,7 @@ export default function ThemeDatePicker({
         className={`
           inline-flex items-center gap-2 min-w-[148px]
           border border-hydro-border rounded-xl
-          px-2.5 py-1.5 text-[0.8rem]
+          px-2.5 py-1.5 text-[0.88rem]
           bg-white/90 text-hydro-ink
           hover:border-hydro-accent hover:bg-hydro-accent-soft/70
           focus:outline-none focus:border-hydro-accent focus:bg-hydro-accent-soft/70
@@ -255,7 +255,7 @@ export default function ThemeDatePicker({
                 <ChevronLeft size={16} />
               </button>
 
-              <p className="font-display font-semibold text-[0.9rem] text-hydro-ink">
+              <p className="font-display font-semibold text-[0.95rem] text-hydro-ink">
                 {MONTHS[view.getMonth()]} {view.getFullYear()}
               </p>
 
@@ -278,7 +278,7 @@ export default function ThemeDatePicker({
               {WEEKDAYS.map((day) => (
                 <div
                   key={day}
-                  className="text-center text-[0.68rem] font-semibold text-hydro-muted py-1"
+                  className="text-center text-[0.78rem] font-semibold text-hydro-muted py-1"
                 >
                   {day}
                 </div>
@@ -327,7 +327,7 @@ export default function ThemeDatePicker({
                   onChange("");
                   setOpen(false);
                 }}
-                className="text-[0.75rem] font-semibold text-hydro-muted hover:text-hydro-primary transition cursor-pointer"
+                className="text-[0.82rem] font-semibold text-hydro-muted hover:text-hydro-primary transition cursor-pointer"
               >
                 Hapus
               </button>
@@ -336,7 +336,7 @@ export default function ThemeDatePicker({
                 disabled={!canToday}
                 onClick={() => pick(today)}
                 className="
-                  text-[0.75rem] font-semibold
+                  text-[0.82rem] font-semibold
                   text-hydro-primary hover:underline
                   disabled:opacity-40 disabled:no-underline
                   transition cursor-pointer

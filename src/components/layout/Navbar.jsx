@@ -19,7 +19,9 @@ export default function Navbar({
 }) {
   const { toggle } = useSidebar();
   const { iot } = useSettings();
-  const cloudName = iot.platform === "mqtt" ? "MQTT" : "Cloud";
+  const platformLabel = iot.platform === "mqtt" ? "MQTT" : "Cloud";
+  const statusLabel = iot.cloud ? "Online" : "Offline";
+  const statusTitle = `IoT · ${statusLabel}${iot.cloud ? ` · ${platformLabel}` : ""}`;
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -76,16 +78,16 @@ export default function Navbar({
           key={title}
           className="pl-1 pr-2 sm:pr-4 flex flex-col justify-center min-w-0 title-enter"
         >
-          <h1 className="font-display text-sm sm:text-[0.98rem] font-semibold text-hydro-ink tracking-tight leading-tight truncate">
+          <h1 className="font-display text-[0.88rem] sm:text-[0.95rem] font-semibold text-hydro-ink tracking-tight leading-tight truncate">
             {title}
           </h1>
-          <p className="text-[0.7rem] sm:text-[0.74rem] text-hydro-muted truncate max-w-[42vw] sm:max-w-none">
+          <p className="text-[0.72rem] sm:text-[0.78rem] text-hydro-muted truncate max-w-[42vw] sm:max-w-none">
             {subtitle}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-3 px-2 sm:px-3 shrink-0 text-[0.75rem] sm:text-[0.8rem]">
+      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-2.5 px-2 sm:px-3 shrink-0 text-[0.72rem] sm:text-[0.78rem]">
         {/* Status IoT compact (mobile) */}
         <div
           className={`
@@ -97,7 +99,7 @@ export default function Navbar({
                 : "bg-hydro-bg2 border-hydro-border text-hydro-muted"
             }
           `}
-          title={iot.cloud ? `IoT · ${cloudName}` : "IoT · Offline"}
+          title={statusTitle}
         >
           <span className="relative flex h-1.5 w-1.5">
             {iot.cloud && (
@@ -109,9 +111,9 @@ export default function Navbar({
               }`}
             />
           </span>
-          <Cloud size={13} />
-          <span className="font-semibold text-[0.7rem]">
-            {iot.cloud ? cloudName : "Off"}
+          <Cloud size={12} />
+          <span className="font-semibold text-[0.72rem]">
+            {iot.cloud ? "Online" : "Off"}
           </span>
         </div>
 
@@ -119,13 +121,14 @@ export default function Navbar({
         <div
           className={`
             hidden sm:inline-flex items-center gap-1.5
-            px-2.5 py-1 rounded-full border
+            px-2 py-1 rounded-full border
             ${
               iot.cloud
                 ? "bg-hydro-accent-soft/80 border-hydro-primary/15 text-hydro-primary"
                 : "bg-hydro-bg2 border-hydro-border text-hydro-muted"
             }
           `}
+          title={statusTitle}
         >
           <span className="relative flex h-1.5 w-1.5 live-dot">
             {iot.cloud && (
@@ -137,22 +140,24 @@ export default function Navbar({
               }`}
             />
           </span>
-          <Cloud size={14} />
-          <span className="font-semibold whitespace-nowrap">
-            IoT · {iot.cloud ? `${cloudName}` : "Offline"}
+          <Cloud size={13} />
+          <span className="font-semibold whitespace-nowrap text-[0.72rem] sm:text-[0.78rem]">
+            IoT · {statusLabel}
           </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-hydro-bg2/70 border border-hydro-border/80 text-hydro-muted">
-          <Clock3 size={14} className="text-hydro-primary" />
-          <span className="tabular-nums font-medium text-hydro-ink">
+        <div className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded-full bg-hydro-bg2/70 border border-hydro-border/80 text-hydro-muted">
+          <Clock3 size={13} className="text-hydro-primary" />
+          <span className="tabular-nums font-medium text-hydro-ink text-[0.72rem] sm:text-[0.78rem]">
             {formattedTime}
           </span>
         </div>
 
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-hydro-bg2/70 border border-hydro-border/80 text-hydro-muted">
-          <CalendarDays size={14} className="text-hydro-primary" />
-          <span className="whitespace-nowrap font-medium">{formattedDate}</span>
+        <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-full bg-hydro-bg2/70 border border-hydro-border/80 text-hydro-muted">
+          <CalendarDays size={13} className="text-hydro-primary" />
+          <span className="whitespace-nowrap font-medium text-[0.72rem] sm:text-[0.78rem]">
+            {formattedDate}
+          </span>
         </div>
       </div>
     </div>

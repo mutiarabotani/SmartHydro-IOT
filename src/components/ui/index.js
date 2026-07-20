@@ -1,5 +1,5 @@
 /**
- * Barrel export — komponen UI generik (pager, select, date picker, tip).
+ * Barrel export — komponen UI generik (pager, select, date picker, tip, sort).
  * Memudahkan import: import { TablePager, ThemeSelect } from "../components/ui"
  */
 export { default as TablePager } from "./TablePager";
@@ -7,3 +7,11 @@ export { TablePageSize, paginateRows, PAGE_SIZE_OPTIONS } from "./TablePager";
 export { default as ThemeSelect } from "./ThemeSelect";
 export { default as ThemeDatePicker } from "./ThemeDatePicker";
 export { default as ThemeTip } from "./ThemeTip";
+export {
+  default as SortableTh,
+  SortDirIcon,
+  nextSortState,
+  sortRows,
+  timeToMinutes,
+  parseIdDate,
+} from "./SortableTh";

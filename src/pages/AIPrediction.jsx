@@ -16,6 +16,10 @@ import {
   TablePageSize,
   paginateRows,
   ThemeDatePicker,
+  SortableTh,
+  nextSortState,
+  sortRows,
+  timeToMinutes,
 } from "../components/ui";
 import { useToast } from "../context/ToastContext";
 import {
@@ -37,6 +41,26 @@ import {
   Loader2,
 } from "lucide-react";
 
+/** Ambil angka dari string seperti "320 ml", "92%", "2.4 L" */
+function parseMetricNumber(value) {
+  const m = String(value ?? "").replace(",", ".").match(/-?\d+(\.\d+)?/);
+  return m ? Number(m[0]) : 0;
+}
+
+function historySortValue(row, key) {
+  switch (key) {
+    case "time":
+      return timeToMinutes(row.time);
+    case "nutrisi":
+    case "air":
+    case "akurasi":
+      return parseMetricNumber(row[key]);
+    case "status":
+      return row.status;
+    default:
+      return "";
+  }
+}
 const HISTORY = [
   {
     time: "10:00",
@@ -146,10 +170,10 @@ function PredictionCard({
           {icon}
         </span>
         <div className="min-w-0">
-          <h3 className="font-display text-[0.86rem] font-semibold text-hydro-ink leading-snug">
+          <h3 className="font-display text-[0.95rem] font-semibold text-hydro-ink leading-snug">
             {title}
           </h3>
-          <p className="text-[0.7rem] text-hydro-muted mt-0.5">
+          <p className="text-[0.78rem] text-hydro-muted mt-0.5">
             {horizon} jam ke depan
           </p>
         </div>
@@ -164,7 +188,7 @@ function PredictionCard({
       </p>
 
       <div className="mt-auto pt-4">
-        <div className="flex justify-between text-[0.72rem] mb-1.5">
+        <div className="flex justify-between text-[0.78rem] mb-1.5">
           <span className="text-hydro-muted">Tingkat keyakinan</span>
           <span className={`font-semibold ${accentClass}`}>{confidence}%</span>
         </div>
@@ -191,6 +215,7 @@ export default function AIPrediction() {
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [sort, setSort] = useState({ key: "time", dir: "desc" });
   const [sensors, setSensors] = useState({
     ph: 5.86,
     ec: 1.62,
@@ -206,9 +231,19 @@ export default function AIPrediction() {
     confAir: 89,
   });
 
+  const handleSort = (column) => {
+    setSort((prev) => nextSortState(prev, column, "asc"));
+    setPage(1);
+  };
+
   const history = useMemo(
     () => HISTORY.filter((row) => row.date === date),
     [date]
+  );
+
+  const sortedHistory = useMemo(
+    () => sortRows(history, sort, historySortValue),
+    [history, sort]
   );
 
   useEffect(() => {
@@ -216,8 +251,8 @@ export default function AIPrediction() {
   }, [date]);
 
   const pagedHistory = useMemo(
-    () => paginateRows(history, page, pageSize),
-    [history, page, pageSize]
+    () => paginateRows(sortedHistory, page, pageSize),
+    [sortedHistory, page, pageSize]
   );
 
   const anomalies = useMemo(
@@ -312,7 +347,7 @@ export default function AIPrediction() {
           <h2 className="font-display font-semibold text-[0.98rem] text-hydro-ink">
             Ringkasan Prediksi
           </h2>
-          <p className="text-[0.72rem] text-hydro-muted mt-1">
+          <p className="text-[0.78rem] text-hydro-muted mt-1">
             {ai.enabled
               ? `Horizon ${horizon} jam · ${modelLabel(ai.model)}`
               : "Modul AI nonaktif — aktifkan di Setting"}
@@ -378,7 +413,7 @@ export default function AIPrediction() {
           <h3 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
             Analisis Faktor Sensor
           </h3>
-          <p className="text-[0.72rem] text-hydro-muted mt-0.5">
+          <p className="text-[0.78rem] text-hydro-muted mt-0.5">
             Nilai terkini dibanding ambang batas di Setting
           </p>
         </div>
@@ -442,14 +477,14 @@ export default function AIPrediction() {
               <h3 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
                 Analisis AI
               </h3>
-              <p className="text-[0.72rem] text-hydro-muted mt-0.5 leading-relaxed">
+              <p className="text-[0.78rem] text-hydro-muted mt-0.5 leading-relaxed">
                 Ringkasan pola sensor untuk prediksi kebutuhan dan deteksi
                 anomali.
               </p>
             </div>
           </div>
 
-          <div className="space-y-2 text-[0.84rem] flex-1">
+          <div className="space-y-2 text-[0.88rem] flex-1">
             {hasAnomaly ? (
               anomalies.map((item) => (
                 <div
@@ -537,7 +572,7 @@ export default function AIPrediction() {
               <h3 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
                 Riwayat Prediksi
               </h3>
-              <p className="text-[0.72rem] text-hydro-muted mt-0.5">
+              <p className="text-[0.78rem] text-hydro-muted mt-0.5">
                 {history.length
                   ? `${history.length} entri pada tanggal terpilih`
                   : "Tidak ada data untuk tanggal ini"}
@@ -551,7 +586,7 @@ export default function AIPrediction() {
           </div>
 
           {pagedHistory.total === 0 ? (
-            <div className="rounded-xl border border-dashed border-hydro-border bg-hydro-bg2/40 px-4 py-10 text-center text-[0.85rem] text-hydro-muted">
+            <div className="rounded-xl border border-dashed border-hydro-border bg-hydro-bg2/40 px-4 py-10 text-center text-[0.82rem] text-hydro-muted">
               Tidak ada riwayat untuk tanggal ini. Coba 16–17 Jul 2026.
             </div>
           ) : (
@@ -560,7 +595,13 @@ export default function AIPrediction() {
                 <table className="hydro-table min-w-[520px]">
                   <thead>
                     <tr>
-                      <th>Waktu</th>
+                      <SortableTh
+                        label="Waktu"
+                        column="time"
+                        sortKey={sort.key}
+                        sortDir={sort.dir}
+                        onSort={handleSort}
+                      />
                       <th>Nutrisi</th>
                       <th>Air</th>
                       <th>Keyakinan</th>
@@ -607,7 +648,7 @@ export default function AIPrediction() {
               <h3 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
                 Rekomendasi AI
               </h3>
-              <p className="text-[0.7rem] text-hydro-muted">Decision support</p>
+              <p className="text-[0.78rem] text-hydro-muted">Decision support</p>
             </div>
           </div>
 
@@ -618,15 +659,15 @@ export default function AIPrediction() {
                 className="text-hydro-primary shrink-0 mt-0.5"
               />
               <div className="min-w-0">
-                <p className="font-display text-[0.9rem] font-semibold text-hydro-ink leading-snug">
+                <p className="font-display text-[0.95rem] font-semibold text-hydro-ink leading-snug">
                   Penambahan nutrisi{" "}
                   <span className="text-hydro-primary">{recommendMl} ml</span>
                 </p>
-                <p className="text-[0.75rem] text-hydro-muted mt-1">
+                <p className="text-[0.82rem] text-hydro-muted mt-1">
                   dalam 3 jam ke depan
                 </p>
                 {applied ? (
-                  <p className="text-[0.72rem] font-semibold text-hydro-primary mt-2">
+                  <p className="text-[0.78rem] font-semibold text-hydro-primary mt-2">
                     Sudah diterapkan
                   </p>
                 ) : null}
@@ -635,7 +676,7 @@ export default function AIPrediction() {
           </div>
 
           <div className="mb-3.5">
-            <div className="flex justify-between text-[0.72rem] mb-1.5">
+            <div className="flex justify-between text-[0.78rem] mb-1.5">
               <span className="text-hydro-muted">Tingkat keyakinan</span>
               <span className="font-semibold text-hydro-primary">
                 {prediction.confNutrisi}%
@@ -679,7 +720,7 @@ export default function AIPrediction() {
       </div>
 
       {/* Footer catatan — lebar selaras card di atas */}
-      <p className="inline-flex items-start gap-1.5 text-[0.72rem] text-hydro-muted leading-relaxed w-full pb-1">
+      <p className="inline-flex items-start gap-1.5 text-[0.78rem] text-hydro-muted leading-relaxed w-full pb-1">
         <Info size={13} className="shrink-0 mt-0.5 text-hydro-primary" />
         <span className="min-w-0 flex-1">
           Prediksi berdasarkan data sensor terkini &amp; historis. AI berperan

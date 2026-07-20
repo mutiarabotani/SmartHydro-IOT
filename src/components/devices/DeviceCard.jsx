@@ -86,15 +86,15 @@ export default function DeviceCard({
         </span>
       </div>
 
-      <h3 className="font-display text-[0.9rem] font-semibold text-hydro-ink leading-snug">
+      <h3 className="font-display text-[0.95rem] font-semibold text-hydro-ink leading-snug">
         {title}
       </h3>
-      <p className="text-[0.7rem] text-hydro-muted mt-1 tabular-nums">
+      <p className="text-[0.78rem] text-hydro-muted mt-1 tabular-nums">
         Update {updatedAt} WIB
       </p>
 
       <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-hydro-border/70">
-        <span className="text-[0.7rem] text-hydro-muted inline-flex items-center gap-1">
+        <span className="text-[0.78rem] text-hydro-muted inline-flex items-center gap-1">
           {disabled ? (
             <>
               <Lock size={11} className="text-hydro-warn" />

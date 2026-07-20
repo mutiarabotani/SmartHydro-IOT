@@ -37,7 +37,8 @@
 @layer base {
   html {
     font-family: var(--font-sans);
-    font-size: 14px;
+    /* 15px: lebih nyaman dibaca; masih padat untuk dashboard */
+    font-size: 15px;
     color: var(--color-hydro-ink);
   }
 
@@ -72,8 +73,8 @@
       );
     background-attachment: fixed;
     font-family: var(--font-sans);
-    font-size: 0.925rem;
-    line-height: 1.45;
+    font-size: 0.95rem;
+    line-height: 1.5;
   }
 
   h1,
@@ -224,13 +225,13 @@
   .section-title {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.98rem;
     color: var(--color-hydro-ink);
     letter-spacing: -0.01em;
   }
 
   .section-sub {
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     color: var(--color-hydro-muted);
     line-height: 1.45;
   }
@@ -280,7 +281,7 @@
     background: var(--color-hydro-primary);
     color: #ffffff;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.88rem;
     border: 1px solid transparent;
     box-shadow: 0 6px 16px rgba(14, 106, 92, 0.18);
     cursor: pointer;
@@ -306,7 +307,7 @@
     background: rgba(255, 255, 255, 0.85);
     color: var(--color-hydro-muted);
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.88rem;
     border: 1px solid var(--color-hydro-border);
     cursor: pointer;
   }
@@ -323,7 +324,7 @@
   }
 
   .btn-link {
-    font-size: 0.75rem;
+    font-size: 0.82rem;
     font-weight: 600;
     color: var(--color-hydro-primary);
     cursor: pointer;
@@ -340,7 +341,7 @@
     border: 1px solid var(--color-hydro-border);
     border-radius: 0.65rem;
     padding: 0.45rem 0.75rem;
-    font-size: 0.8rem;
+    font-size: 0.88rem;
     background: rgba(255, 255, 255, 0.9);
     color: var(--color-hydro-ink);
     outline: none;
@@ -368,7 +369,7 @@
     gap: 0.35rem;
     padding: 0.2rem 0.55rem;
     border-radius: 999px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
     border: 1px solid transparent;
   }
@@ -397,11 +398,12 @@
     border-color: var(--color-hydro-border);
   }
 
-  /* Bingkai luar tabel — sama tipis & warna dengan garis antar sel */
+  /* Bingkai luar tabel — scroll horizontal saja; vertikal ikut halaman */
   .table-scroll:has(.hydro-table) {
     border: 1px solid var(--color-hydro-border);
     border-radius: 0.65rem;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: visible;
     background: rgba(255, 255, 255, 0.55);
   }
 
@@ -409,14 +411,14 @@
   .hydro-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     border: 0;
   }
 
   .hydro-table th,
   .hydro-table td {
     border: 1px solid var(--color-hydro-border);
-    padding: 0.55rem 0.5rem;
+    padding: 0.6rem 0.55rem;
     text-align: center;
   }
 
@@ -437,6 +439,61 @@
 
   .hydro-table .text-left {
     text-align: left;
+  }
+
+  /* Sort — chevron minimal bertumpuk (atas–bawah) */
+  .sort-th-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0.15rem 0.25rem;
+    border-radius: 0.4rem;
+    font-weight: 600;
+    color: inherit;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .sort-th-btn:hover,
+  .sort-th-btn.is-active {
+    color: var(--color-hydro-primary);
+  }
+
+  .sort-th-btn:hover {
+    background: rgba(42, 174, 160, 0.07);
+  }
+
+  .sort-pair {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-shrink: 0;
+    line-height: 0;
+  }
+
+  .sort-pair svg {
+    display: block;
+    margin-block: -1.5px;
+  }
+
+  .sort-pair .sort-off {
+    color: var(--color-hydro-muted);
+    opacity: 0.4;
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+
+  .sort-th-btn:hover .sort-off {
+    opacity: 0.55;
+  }
+
+  .sort-pair .sort-on {
+    color: var(--color-hydro-primary);
+    opacity: 1;
   }
 
   .sensor-tile {
@@ -617,7 +674,7 @@
     border-radius: 0.45rem;
     background: var(--color-hydro-primary);
     color: #ffffff;
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;

@@ -53,7 +53,7 @@ function chipClassForValue(value) {
 /** Baris label–nilai untuk panel Status Sistem */
 function Row({ label, value, tone }) {
   return (
-    <div className="flex justify-between items-center gap-3 text-[0.8rem]">
+    <div className="flex justify-between items-center gap-3 text-[0.88rem]">
       <span className="text-hydro-muted">{label}</span>
       <span
         className={`chip ${tone || chipClassForValue(value)} min-w-[96px] justify-center`}
@@ -154,7 +154,7 @@ export default function Dashboard() {
                         {sensor.title === "Cahaya" && <Sun size={14} />}
                         {sensor.title === "Level Air" && <Waves size={14} />}
 
-                        <h3 className="text-[0.72rem] font-medium text-hydro-muted">
+                        <h3 className="text-[0.78rem] font-medium text-hydro-muted">
                           {sensor.title}
                         </h3>
                       </div>
@@ -167,7 +167,7 @@ export default function Dashboard() {
                           {sensor.value}
                         </span>
 
-                        <span className="text-[0.7rem] text-hydro-muted mb-0.5">
+                        <span className="text-[0.78rem] text-hydro-muted mb-0.5">
                           {sensor.unit}
                         </span>
                       </div>
@@ -256,142 +256,88 @@ export default function Dashboard() {
               </div>
 
               <div className="panel-body">
-<div className="max-h-[220px] overflow-y-auto table-scroll">
-  <table className="hydro-table min-w-[560px]">
-    <thead>
-      <tr>
-        <th className="w-8"></th>
-        <th>Waktu</th>
-        <th>Level</th>
-        <th>Sumber</th>
-        <th>Pesan</th>
-        <th>Tipe</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr>
-        <td>
-          <CheckCircle2
-            size={14}
-            className="mx-auto text-hydro-primary"
-          />
-        </td>
-        <td>
-          10:23
-        </td>
-        <td>
-          INFO
-        </td>
-        <td>
-          Sistem
-        </td>
-        <td>
-          Pompa nutrisi dinyalakan otomatis
-        </td>
-        <td>
-          Aktuasi
-        </td>
-      </tr>
-
-      <tr>
-        <td>
-          <CheckCircle2
-            size={14}
-            className="mx-auto text-hydro-primary"
-          />
-        </td>
-        <td>
-          10:45
-        </td>
-        <td>
-          INFO
-        </td>
-        <td>
-          Sistem
-        </td>
-        <td>
-          Pengisian air otomatis 2,5 Liter
-        </td>
-        <td>
-          Aktuasi
-        </td>
-      </tr>
-
-      <tr>
-        <td>
-          <AlertTriangle
-            size={14}
-            className="mx-auto text-hydro-warn"
-          />
-        </td>
-        <td>
-          09:30
-        </td>
-        <td>
-          WARNING
-        </td>
-        <td>
-          Sensor pH
-        </td>
-        <td>
-          pH turun, penyesuaian otomatis dilakukan
-        </td>
-        <td>
-          Peringatan
-        </td>
-      </tr>
-
-      <tr>
-        <td>
-          <Bot
-            size={14}
-            className="mx-auto text-hydro-accent"
-          />
-        </td>
-        <td>
-          08:15
-        </td>
-        <td>
-          INFO
-        </td>
-        <td>
-          AI Prediction
-        </td>
-        <td>
-          AI prediksi kebutuhan nutrisi dijalankan
-        </td>
-        <td>
-          AI
-        </td>
-      </tr>
-
-      <tr>
-        <td>
-          <CheckCircle2
-            size={14}
-            className="mx-auto text-hydro-primary"
-          />
-        </td>
-        <td>
-          07:20
-        </td>
-        <td>
-          INFO
-        </td>
-        <td>
-          Sistem
-        </td>
-        <td>
-          Suhu kembali normal
-        </td>
-        <td>
-          Sensor
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+                {/* 5 log terbaru — tanpa scroll vertikal */}
+                <div className="table-scroll overflow-x-auto overflow-y-visible">
+                  <table className="hydro-table min-w-[560px]">
+                    <thead>
+                      <tr>
+                        <th className="w-8"></th>
+                        <th>Waktu</th>
+                        <th>Level</th>
+                        <th>Sumber</th>
+                        <th>Pesan</th>
+                        <th>Tipe</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <CheckCircle2
+                            size={14}
+                            className="mx-auto text-hydro-primary"
+                          />
+                        </td>
+                        <td>10:23</td>
+                        <td>INFO</td>
+                        <td>Sistem</td>
+                        <td>Pompa nutrisi dinyalakan otomatis</td>
+                        <td>Aktuasi</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <CheckCircle2
+                            size={14}
+                            className="mx-auto text-hydro-primary"
+                          />
+                        </td>
+                        <td>10:45</td>
+                        <td>INFO</td>
+                        <td>Sistem</td>
+                        <td>Pengisian air otomatis 2,5 Liter</td>
+                        <td>Aktuasi</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <AlertTriangle
+                            size={14}
+                            className="mx-auto text-hydro-warn"
+                          />
+                        </td>
+                        <td>09:30</td>
+                        <td>WARNING</td>
+                        <td>Sensor pH</td>
+                        <td>pH turun, penyesuaian otomatis dilakukan</td>
+                        <td>Peringatan</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <Bot
+                            size={14}
+                            className="mx-auto text-hydro-accent"
+                          />
+                        </td>
+                        <td>08:15</td>
+                        <td>INFO</td>
+                        <td>AI Prediction</td>
+                        <td>AI prediksi kebutuhan nutrisi dijalankan</td>
+                        <td>AI</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <CheckCircle2
+                            size={14}
+                            className="mx-auto text-hydro-primary"
+                          />
+                        </td>
+                        <td>07:20</td>
+                        <td>INFO</td>
+                        <td>Sistem</td>
+                        <td>Suhu kembali normal</td>
+                        <td>Sensor</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -420,7 +366,7 @@ export default function Dashboard() {
             <div className="panel-body">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3 items-start">
                 <div className="border border-hydro-border rounded-xl p-3 bg-white/70 h-fit">
-                  <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
+                  <h3 className="font-display font-medium text-[0.95rem] text-hydro-ink">
                     Prediksi Kebutuhan Nutrisi
                   </h3>
 
@@ -428,7 +374,7 @@ export default function Dashboard() {
                     320 ml
                   </div>
 
-                  <div className="mt-2 text-[0.75rem] text-hydro-muted">
+                  <div className="mt-2 text-[0.82rem] text-hydro-muted">
                     Confidence: 92%
                   </div>
 
@@ -441,7 +387,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="border border-hydro-border rounded-xl p-3 bg-white/70 h-fit">
-                  <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
+                  <h3 className="font-display font-medium text-[0.95rem] text-hydro-ink">
                     Prediksi Kebutuhan Air
                   </h3>
 
@@ -449,7 +395,7 @@ export default function Dashboard() {
                     2.4 L
                   </div>
 
-                  <div className="mt-2 text-[0.75rem] text-hydro-muted">
+                  <div className="mt-2 text-[0.82rem] text-hydro-muted">
                     Confidence: 89%
                   </div>
 
@@ -462,7 +408,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="border border-hydro-border rounded-xl p-3 bg-white/70 h-fit">
-                  <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
+                  <h3 className="font-display font-medium text-[0.95rem] text-hydro-ink">
                     Deteksi Kondisi
                   </h3>
 
@@ -480,7 +426,7 @@ export default function Dashboard() {
                       {anomalies.length ? "ANOMALI" : "NORMAL"}
                     </span>
                   </div>
-                  <p className="text-[0.75rem] text-hydro-muted mt-2 leading-snug">
+                  <p className="text-[0.82rem] text-hydro-muted mt-2 leading-snug">
                     {anomalies.length
                       ? `${anomalies[0].label}${
                           anomalies.length > 1 ? ` (+${anomalies.length - 1})` : ""
@@ -513,7 +459,7 @@ export default function Dashboard() {
             </div>
 
             <div className="panel-body">
-              <p className="text-[0.85rem] text-hydro-muted leading-relaxed">
+              <p className="text-[0.82rem] text-hydro-muted leading-relaxed">
                 {!ai.enabled
                   ? "Prediksi AI dinonaktifkan. Aktifkan di Setting untuk menampilkan rekomendasi korektif."
                   : anomalies.length

@@ -7,6 +7,7 @@
  * 3. Koneksi IoT MQTT (kolom kanan)
  * 4. AI Setting (decision support)
  *
+ * Input numerik difilter: float (ambang), integer (port/interval).
  * Disimpan via SettingsContext → localStorage (belum API).
  * Layout: PageShell.
  */
@@ -22,6 +23,11 @@ import {
   DEFAULT_AI,
   DEFAULT_CONTROL,
 } from "../context/SettingsContext";
+import {
+  sanitizeFloat,
+  sanitizeInteger,
+  sanitizeString,
+} from "../utils/validation";
 import {
   SlidersHorizontal,
   Bell,
@@ -123,7 +129,7 @@ function Field({ label, hint, children }) {
       </label>
       {children}
       {hint ? (
-        <p className="text-[0.7rem] text-hydro-muted leading-snug">{hint}</p>
+        <p className="text-[0.78rem] text-hydro-muted leading-snug">{hint}</p>
       ) : null}
     </div>
   );
@@ -134,11 +140,11 @@ function ToggleRow({ title, desc, checked, onChange, disabled }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
       <div className="min-w-0">
-        <p className="text-[0.84rem] text-hydro-ink font-medium leading-snug">
+        <p className="text-[0.88rem] text-hydro-ink font-medium leading-snug">
           {title}
         </p>
         {desc ? (
-          <p className="text-[0.7rem] text-hydro-muted mt-0.5 leading-snug">
+          <p className="text-[0.78rem] text-hydro-muted mt-0.5 leading-snug">
             {desc}
           </p>
         ) : null}
@@ -150,9 +156,10 @@ function ToggleRow({ title, desc, checked, onChange, disabled }) {
 
 function inputClass() {
   return `
-    w-full border border-hydro-border rounded-xl
-    px-3 py-2 text-[0.8rem]
+    w-full rounded-xl
+    px-3 py-2 text-[0.88rem]
     bg-white/90 text-hydro-ink
+    border border-hydro-border
     hover:border-hydro-accent hover:bg-hydro-accent-soft/70
     focus:outline-none focus:border-hydro-accent focus:bg-hydro-accent-soft/70
     focus:shadow-[0_0_0_3px_rgba(42,174,160,0.12)]
@@ -171,7 +178,7 @@ function SectionTitle({ icon, title, sub }) {
         </h2>
       </div>
       {sub ? (
-        <p className="text-[0.75rem] text-hydro-muted mt-1.5 leading-snug">
+        <p className="text-[0.82rem] text-hydro-muted mt-1.5 leading-snug">
           {sub}
         </p>
       ) : null}
@@ -208,10 +215,14 @@ export default function Setting() {
   ]);
 
   const setThreshold = (key, value) => {
-    setThresholds((prev) => ({ ...prev, [key]: value }));
+    setThresholds((prev) => ({ ...prev, [key]: sanitizeFloat(value) }));
   };
 
-  /** Simpan singkat — spinner di tombol saja, tanpa splash penuh */
+  const setIotField = (key, value, sanitize = (v) => v) => {
+    setIot((prev) => ({ ...prev, [key]: sanitize(value) }));
+  };
+
+  /** Simpan singkat — spinner di tombol saja */
   const handleSave = () => {
     if (saving || resetting) return;
     setSaving(true);
@@ -256,11 +267,11 @@ export default function Setting() {
               className="rounded-xl border border-hydro-border/80 bg-hydro-bg2/35 p-3"
             >
               <div className="flex items-baseline justify-between gap-2 mb-2.5">
-                <p className="text-[0.8rem] font-semibold text-hydro-ink">
+                <p className="text-[0.88rem] font-semibold text-hydro-ink">
                   {group.title}
                 </p>
                 {group.unit ? (
-                  <span className="text-[0.68rem] text-hydro-muted tabular-nums">
+                  <span className="text-[0.78rem] text-hydro-muted tabular-nums">
                     {group.unit}
                   </span>
                 ) : null}
@@ -270,23 +281,21 @@ export default function Setting() {
                   <input
                     className={inputClass()}
                     value={thresholds[group.minKey]}
-                    onChange={(e) =>
-                      setThreshold(group.minKey, e.target.value)
-                    }
+                    inputMode="decimal"
+                    onChange={(e) => setThreshold(group.minKey, e.target.value)}
                   />
                 </Field>
                 <Field label="Maksimum">
                   <input
                     className={inputClass()}
                     value={thresholds[group.maxKey]}
-                    onChange={(e) =>
-                      setThreshold(group.maxKey, e.target.value)
-                    }
+                    inputMode="decimal"
+                    onChange={(e) => setThreshold(group.maxKey, e.target.value)}
                   />
                 </Field>
               </div>
               {group.hint ? (
-                <p className="text-[0.68rem] text-hydro-muted mt-2 leading-snug">
+                <p className="text-[0.78rem] text-hydro-muted mt-2 leading-snug">
                   {group.hint}
                 </p>
               ) : null}
@@ -357,15 +366,15 @@ export default function Setting() {
             sub="Pengaturan perangkat dan alamat server untuk pengiriman data sensor"
           />
           <div className="space-y-3">
-            <Field
-              label="Nama perangkat"
-              hint="Contoh: Greenhouse-1 atau Wemos D1"
-            >
+            <Field label="Nama perangkat" hint="Maks. 64 karakter">
               <input
                 className={inputClass()}
                 value={iot.deviceName}
+                maxLength={64}
                 onChange={(e) =>
-                  setIot({ ...iot, deviceName: e.target.value })
+                  setIotField("deviceName", e.target.value, (v) =>
+                    sanitizeString(v, 64)
+                  )
                 }
               />
             </Field>
@@ -381,12 +390,18 @@ export default function Setting() {
               />
             </Field>
             <div className="grid grid-cols-[1fr_5.5rem] gap-2.5">
-              <Field label="Alamat broker" hint="Contoh: broker.emqx.io">
+              <Field
+                label="Alamat broker"
+                hint="Contoh: broker.emqx.io"
+              >
                 <input
                   className={inputClass()}
                   value={iot.mqttBroker}
+                  maxLength={128}
                   onChange={(e) =>
-                    setIot({ ...iot, mqttBroker: e.target.value })
+                    setIotField("mqttBroker", e.target.value, (v) =>
+                      sanitizeString(v, 128)
+                    )
                   }
                 />
               </Field>
@@ -394,21 +409,20 @@ export default function Setting() {
                 <input
                   className={inputClass()}
                   value={iot.mqttPort ?? "1883"}
+                  inputMode="numeric"
                   onChange={(e) =>
-                    setIot({ ...iot, mqttPort: e.target.value })
+                    setIotField("mqttPort", e.target.value, sanitizeInteger)
                   }
                 />
               </Field>
             </div>
-            <Field
-              label="Interval kirim data (detik)"
-              hint="Seberapa sering data sensor dikirim"
-            >
+            <Field label="Interval kirim data (detik)">
               <input
                 className={inputClass()}
                 value={iot.interval}
+                inputMode="numeric"
                 onChange={(e) =>
-                  setIot({ ...iot, interval: e.target.value })
+                  setIotField("interval", e.target.value, sanitizeInteger)
                 }
               />
             </Field>

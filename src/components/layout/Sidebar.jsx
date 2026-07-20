@@ -101,7 +101,7 @@ export default function Sidebar() {
           </div>
 
           {open && (
-            <h1 className="font-display font-semibold text-[0.95rem] text-hydro-ink tracking-tight whitespace-nowrap">
+            <h1 className="font-display font-semibold text-[1rem] text-hydro-ink tracking-tight whitespace-nowrap">
               SmartHydro-AI
             </h1>
           )}
@@ -217,7 +217,7 @@ function MenuItem({ icon, text, active, onClick, open = true }) {
         {icon}
       </span>
       {open && (
-        <span className="text-[0.84rem] whitespace-nowrap">{text}</span>
+        <span className="text-[0.88rem] whitespace-nowrap">{text}</span>
       )}
 
       {!open &&
@@ -229,7 +229,7 @@ function MenuItem({ icon, text, active, onClick, open = true }) {
               fixed z-[200] pointer-events-none
               px-2.5 py-1.5 rounded-md
               bg-hydro-primary text-white
-              text-[0.72rem] font-medium whitespace-nowrap
+              text-[0.78rem] font-medium whitespace-nowrap
               shadow-[0_6px_16px_rgba(15,107,92,0.22)]
             "
             style={{

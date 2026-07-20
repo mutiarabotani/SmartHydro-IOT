@@ -55,9 +55,10 @@ export function TablePageSize({ pageSize, onPageSizeChange, onPageChange }) {
         }}
         options={PAGE_SIZE_SELECT_OPTIONS}
         align="right"
+        truncate={false}
         aria-label="Jumlah data per halaman"
-        className="w-[5.75rem]"
-        buttonClassName="px-2 py-1 text-[0.78rem] min-w-[5.75rem]"
+        className="w-auto"
+        buttonClassName="!px-2.5 !py-1 !text-[0.78rem] !gap-1.5 !w-auto min-w-[4.5rem]"
       />
       <span className="whitespace-nowrap">data</span>
     </div>
@@ -78,7 +79,7 @@ export default function TablePager({
 
   return (
     <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-      <span className="text-[0.75rem] text-hydro-muted tabular-nums">
+      <span className="text-[0.82rem] text-hydro-muted tabular-nums">
         {total === 0 ? "0 data" : `${from}–${to} dari ${total}`}
       </span>
 
@@ -101,7 +102,7 @@ export default function TablePager({
             <ChevronLeft size={16} />
           </button>
         </ThemeTip>
-        <span className="min-w-[4.5rem] text-center text-[0.75rem] text-hydro-muted tabular-nums">
+        <span className="min-w-[4.5rem] text-center text-[0.82rem] text-hydro-muted tabular-nums">
           {isAll ? "Semua" : `${page} / ${totalPages}`}
         </span>
         <ThemeTip tip={isAll || page >= totalPages ? "" : "Berikutnya"} prefer="bottom">

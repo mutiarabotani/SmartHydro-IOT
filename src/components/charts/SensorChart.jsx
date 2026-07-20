@@ -30,7 +30,7 @@ export default function SensorChart({
 }) {
   return (
     <div className="panel h-[200px] sm:h-[220px] p-3 flex flex-col card-enter">
-      <h3 className="font-display font-medium text-[0.85rem] mb-2 text-hydro-ink shrink-0">
+      <h3 className="font-display font-medium text-[0.95rem] mb-2 text-hydro-ink shrink-0">
         {title}
       </h3>
 
@@ -48,7 +48,7 @@ export default function SensorChart({
                 borderRadius: "0.5rem",
                 color: "#0f1c1a",
                 boxShadow: "0 8px 20px rgba(15, 107, 92, 0.12)",
-                fontSize: "0.75rem",
+                fontSize: "0.78rem",
               }}
               labelStyle={{ color: "#0f6b5c", fontWeight: 600 }}
               itemStyle={{ color: "#5a6b66" }}

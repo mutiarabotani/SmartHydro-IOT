@@ -137,7 +137,7 @@ export function ToastProvider({ children }) {
                 {meta.title}
               </h3>
 
-              <p className="text-[0.85rem] text-hydro-muted mt-1.5 leading-relaxed">
+              <p className="text-[0.82rem] text-hydro-muted mt-1.5 leading-relaxed">
                 {alert.message}
               </p>
             </div>

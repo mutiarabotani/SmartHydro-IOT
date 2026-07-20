@@ -21,6 +21,7 @@ export default function ThemeSelect({
   className = "",
   buttonClassName = "",
   align = "left", // "left" | "right"
+  truncate = true,
   "aria-label": ariaLabel,
 }) {
   const [open, setOpen] = useState(false);
@@ -128,7 +129,7 @@ export default function ThemeSelect({
         className={`
           w-full inline-flex items-center justify-between gap-2
           border border-hydro-border rounded-xl
-          px-3 py-2 text-[0.8rem]
+          px-3 py-2 text-[0.88rem]
           bg-white/90 text-hydro-ink
           hover:border-hydro-accent hover:bg-hydro-accent-soft/70
           focus:outline-none focus:border-hydro-accent focus:bg-hydro-accent-soft/70
@@ -139,7 +140,11 @@ export default function ThemeSelect({
           ${buttonClassName}
         `}
       >
-        <span className="min-w-0 flex-1 truncate text-left font-medium">
+        <span
+          className={`min-w-0 flex-1 text-left font-medium ${
+            truncate ? "truncate" : "whitespace-nowrap"
+          }`}
+        >
           {label}
         </span>
         <ChevronDown
@@ -173,7 +178,7 @@ export default function ThemeSelect({
                     type="button"
                     onClick={() => pick(opt)}
                     className={`
-                      w-full text-left px-3 py-1.5 text-[0.8rem]
+                      w-full text-left px-3 py-1.5 text-[0.88rem]
                       transition cursor-pointer
                       ${
                         isSelected

@@ -118,7 +118,7 @@ export default function ThemeTip({
               className="
                 block px-2.5 py-1.5 rounded-md
                 bg-hydro-primary text-white
-                text-[0.72rem] font-medium whitespace-nowrap
+                text-[0.78rem] font-medium whitespace-nowrap
                 shadow-[0_6px_16px_rgba(15,107,92,0.22)]
               "
             >

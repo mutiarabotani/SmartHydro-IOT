@@ -122,11 +122,11 @@ export default function DeviceControl() {
                   onClick={() => changeMode("AUTO")}
                   className={`
                     relative z-10 inline-flex items-center justify-center gap-1.5
-                    py-2 rounded-lg text-[0.8rem] font-semibold cursor-pointer
+                    py-2 rounded-lg text-[0.78rem] font-semibold cursor-pointer
                     ${isAuto ? "text-hydro-primary" : "text-hydro-muted hover:text-hydro-ink"}
                   `}
                 >
-                  <Bot size={14} />
+                  <Bot size={13} />
                   AUTO
                 </button>
                 <button
@@ -134,11 +134,11 @@ export default function DeviceControl() {
                   onClick={() => changeMode("MANUAL")}
                   className={`
                     relative z-10 inline-flex items-center justify-center gap-1.5
-                    py-2 rounded-lg text-[0.8rem] font-semibold cursor-pointer
+                    py-2 rounded-lg text-[0.78rem] font-semibold cursor-pointer
                     ${!isAuto ? "text-hydro-primary" : "text-hydro-muted hover:text-hydro-ink"}
                   `}
                 >
-                  <Hand size={14} />
+                  <Hand size={13} />
                   MANUAL
                 </button>
               </div>
@@ -155,7 +155,7 @@ export default function DeviceControl() {
                 </p>
               </div>
               {isAuto && (
-                <p className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-hydro-warn">
+                <p className="inline-flex items-center gap-1.5 text-[0.82rem] font-medium text-hydro-warn">
                   <Lock size={13} />
                   Dikunci mode AUTO — ubah ke MANUAL untuk kontrol
                 </p>

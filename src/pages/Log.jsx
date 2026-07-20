@@ -17,6 +17,11 @@ import {
   paginateRows,
   ThemeSelect,
   ThemeTip,
+  SortableTh,
+  nextSortState,
+  sortRows,
+  timeToMinutes,
+  parseIdDate,
 } from "../components/ui";
 import { useToast } from "../context/ToastContext";
 import {
@@ -32,6 +37,26 @@ import {
   LayoutList,
   Table2,
 } from "lucide-react";
+
+/** Nilai banding untuk sort kolom log */
+function logSortValue(log, key) {
+  switch (key) {
+    case "date":
+      return parseIdDate(log.date) + timeToMinutes(log.time);
+    case "time":
+      return timeToMinutes(log.time);
+    case "level":
+      return log.level;
+    case "source":
+      return log.source;
+    case "message":
+      return log.message;
+    case "type":
+      return log.type;
+    default:
+      return "";
+  }
+}
 
 /** Data log mock (nanti diganti dari API) */
 const LOGS = [
@@ -235,7 +260,7 @@ function MetricCard({ label, value, icon, tone, hint }) {
       <p className="mt-2.5 text-[0.78rem] font-semibold text-hydro-ink tracking-tight">
         {label}
       </p>
-      <p className="text-[0.68rem] text-hydro-muted mt-0.5">{hint}</p>
+      <p className="text-[0.78rem] text-hydro-muted mt-0.5">{hint}</p>
     </div>
   );
 }
@@ -270,14 +295,14 @@ function LogFeedItem({ log }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3 mb-1">
-          <p className="text-[0.86rem] font-medium text-hydro-ink leading-snug">
+          <p className="text-[0.95rem] font-medium text-hydro-ink leading-snug">
             {log.message}
           </p>
-          <span className="text-[0.7rem] text-hydro-muted tabular-nums shrink-0 pt-0.5">
+          <span className="text-[0.78rem] text-hydro-muted tabular-nums shrink-0 pt-0.5">
             {log.time}
           </span>
         </div>
-        <p className="text-[0.72rem] text-hydro-muted leading-snug">
+        <p className="text-[0.78rem] text-hydro-muted leading-snug">
           <span className={`font-semibold ${levelTextClass(log.level)}`}>
             {log.level}
           </span>
@@ -297,7 +322,14 @@ export default function Log() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [view, setView] = useState("feed"); // "feed" | "table"
+  const [view, setView] = useState("table"); // "feed" | "table"
+  /** Default: terbaru di atas (tanggal+waktu desc) */
+  const [sort, setSort] = useState({ key: "date", dir: "desc" });
+
+  const handleSort = (column) => {
+    setSort((prev) => nextSortState(prev, column, "asc"));
+    setPage(1);
+  };
 
   const counts = useMemo(
     () => ({
@@ -335,13 +367,18 @@ export default function Log() {
     });
   }, [filter, query]);
 
+  const sorted = useMemo(
+    () => sortRows(filtered, sort, logSortValue),
+    [filtered, sort]
+  );
+
   useEffect(() => {
     setPage(1);
   }, [filter, query, view]);
 
   const paged = useMemo(
-    () => paginateRows(filtered, page, pageSize),
-    [filtered, page, pageSize]
+    () => paginateRows(sorted, page, pageSize),
+    [sorted, page, pageSize]
   );
 
   /** Kelompokkan baris halaman aktif berdasarkan tanggal */
@@ -393,19 +430,20 @@ export default function Log() {
         />
       </div>
 
-      {/* Toolbar + konten */}
+      {/* Toolbar + konten — ikut scroll halaman (bukan sticky / nested scroll) */}
       <div className="panel p-0 card-enter">
-        {/* Toolbar sticky — overflow visible supaya tooltip tidak kepotong */}
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl px-3 sm:px-4 pt-3 pb-2 space-y-3 overflow-visible">
+        <div className="px-3 sm:px-4 pt-3 pb-2 space-y-3">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="min-w-0">
               <h2 className="font-display font-semibold text-[0.98rem] text-hydro-ink">
                 Riwayat Aktivitas
               </h2>
-              <p className="text-[0.72rem] text-hydro-muted mt-1">
+              <p className="text-[0.78rem] text-hydro-muted mt-1">
                 {isFiltered
                   ? `${filtered.length} hasil sesuai filter aktif`
-                  : `${filtered.length} entri · urutan terbaru di atas`}
+                  : `${filtered.length} entri · urutan ${
+                      sort.dir === "desc" ? "terbaru" : "terlama"
+                    } di atas`}
               </p>
             </div>
 
@@ -418,7 +456,6 @@ export default function Log() {
                 aria-label="Filter level log"
                 className="w-full sm:w-[9.5rem]"
               />
-
               <div className="relative flex-1 sm:w-[240px]">
                 <Search
                   size={14}
@@ -558,7 +595,7 @@ export default function Log() {
                     <h3 className="text-[0.78rem] font-semibold text-hydro-primary tracking-tight">
                       {date}
                     </h3>
-                    <span className="text-[0.68rem] text-hydro-muted tabular-nums">
+                    <span className="text-[0.78rem] text-hydro-muted tabular-nums">
                       {items.length} entri
                     </span>
                   </div>
@@ -577,7 +614,13 @@ export default function Log() {
                 <thead>
                   <tr>
                     <th className="w-10"></th>
-                    <th>Tanggal</th>
+                    <SortableTh
+                      label="Tanggal"
+                      column="date"
+                      sortKey={sort.key}
+                      sortDir={sort.dir}
+                      onSort={handleSort}
+                    />
                     <th>Waktu</th>
                     <th>Level</th>
                     <th>Sumber</th>
@@ -615,7 +658,7 @@ export default function Log() {
                       <td className="whitespace-nowrap font-medium">
                         {log.source}
                       </td>
-                      <td className="text-left">{log.message}</td>
+                      <td>{log.message}</td>
                       <td className="text-hydro-muted">{log.type}</td>
                     </tr>
                   ))}
