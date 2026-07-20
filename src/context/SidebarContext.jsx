@@ -1,8 +1,8 @@
 /**
- * SidebarContext — state global untuk sidebar (buka/tutup).
- * Dipakai oleh Sidebar.jsx dan Navbar.jsx (tombol Menu).
+ * SidebarContext.jsx — state global UI sidebar (application state layer).
  *
- * Perilaku:
+ * Untuk apa:
+ * - Menyimpan buka/tutup sidebar agar Navbar & Sidebar sinkron
  * - Desktop (≥768px): default terbuka
  * - Mobile (<768px): default tertutup; otomatis tutup saat resize ke mobile
  */

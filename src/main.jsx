@@ -1,31 +1,27 @@
 /**
- * Entry point aplikasi React.
- * File ini yang pertama dijalankan lewat index.html.
+ * main.jsx — entry point aplikasi React SmartHydro-AI.
  *
- * Susunan provider (dari luar ke dalam):
- * 1. StrictMode     → bantu deteksi masalah di development
- * 2. BrowserRouter  → mengaktifkan routing URL (/, /monitoring, dll)
- * 3. SidebarProvider→ state buka/tutup sidebar global
- * 4. ToastProvider  → notifikasi toast global
- * 5. App            → komponen utama berisi Routes
+ * Untuk apa:
+ * - File ini yang pertama dijalankan dari index.html (#root)
+ * - Memasang Router, Context Providers, dan App (routing halaman)
+ * - Mengimpor index.css (tema Tailwind + token desain)
+ *
+ * Lapisan arsitektur:
+ *   index.html → main.jsx → AppProviders → App (Routes) → pages
  */
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { SidebarProvider } from "./context/SidebarContext";
-import { ToastProvider } from "./context/ToastContext";
+import AppProviders from "./app/Providers";
 import App from "./App";
-import "./index.css"; // tema, warna, animasi, scrollbar
+import "./index.css";
 
-// Mount aplikasi ke elemen #root di index.html
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <SidebarProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
-      </SidebarProvider>
+      <AppProviders>
+        <App />
+      </AppProviders>
     </BrowserRouter>
   </React.StrictMode>
 );

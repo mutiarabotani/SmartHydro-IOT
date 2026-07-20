@@ -1,10 +1,12 @@
 /**
- * Sidebar.jsx — menu navigasi kiri SmartHydro-AI.
+ * Sidebar.jsx — menu navigasi kiri SmartHydro-AI (layout layer).
  *
- * Fitur:
- * - Mode penuh (teks + ikon) atau mode ikon saja (saat ditutup)
- * - Di mobile: sidebar fixed + backdrop; spacer menjaga layout konten
- * - Item aktif mengikuti URL saat ini (useLocation)
+ * Untuk apa:
+ * - Navigasi antar halaman (Dashboard → Setting)
+ * - Mode penuh (teks + ikon) atau mode ikon saja saat ditutup
+ * - Mobile: overlay + sidebar fixed; spacer menjaga konten tidak ketutup
+ *
+ * State buka/tutup berasal dari SidebarContext (global).
  */
 import {
   LayoutDashboard,
@@ -13,12 +15,13 @@ import {
   SlidersHorizontal,
   ClipboardList,
   Settings,
-  Leaf
+  Leaf,
 } from "lucide-react";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useSidebar } from "../context/SidebarContext";
+import { useSidebar } from "../../context/SidebarContext";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -53,34 +56,33 @@ export default function Sidebar() {
       {/* Spacer lebar ikon di mobile agar konten tidak ketutup sidebar fixed */}
       <div className="w-[64px] shrink-0 md:hidden" aria-hidden />
 
-      {/* Panel sidebar: lebar 200px (buka) atau 64px (tutup) */}
+      {/* Panel sidebar: lebar 210px (buka) atau 64px (tutup) */}
       <div
         className={`
         sidebar-shell
-        h-screen
+        app-screen
         overflow-y-auto
-        bg-white/90
-        backdrop-blur-md
+        bg-white/85
+        backdrop-blur-xl
         border-r
-        border-hydro-border
+        border-hydro-border/80
         z-30
         max-md:fixed
         max-md:inset-y-0
         max-md:left-0
-        max-md:shadow-lg
+        max-md:shadow-[0_12px_40px_rgba(18,36,33,0.12)]
         md:sticky
         md:top-0
         md:shadow-none
-        ${open ? "w-[200px]" : "w-[64px]"}
+        ${open ? "w-[210px]" : "w-[64px]"}
         `}
       >
-
         {/* Brand / logo aplikasi */}
         <div
           className={`
-          h-[56px]
+          h-[58px]
           border-b
-          border-hydro-border
+          border-hydro-border/80
           flex
           items-center
           ${open ? "px-3 gap-2.5" : "justify-center px-0"}
@@ -88,15 +90,16 @@ export default function Sidebar() {
         >
           <div
             className="
-            w-9 h-9 shrink-0 rounded-lg
-            bg-hydro-accent-soft border border-hydro-border
+            w-9 h-9 shrink-0 rounded-xl
+            bg-gradient-to-br from-hydro-accent-soft to-white
+            border border-hydro-border
             flex items-center justify-center text-hydro-primary
+            shadow-[0_4px_12px_rgba(14,106,92,0.08)]
             "
           >
             <Leaf size={18} />
           </div>
 
-          {/* Nama brand hanya tampil saat sidebar terbuka */}
           {open && (
             <h1 className="font-display font-semibold text-[0.95rem] text-hydro-ink tracking-tight whitespace-nowrap">
               SmartHydro-AI
@@ -105,7 +108,7 @@ export default function Sidebar() {
         </div>
 
         {/* Daftar menu navigasi */}
-        <div>
+        <div className={`${open ? "px-2 py-2" : "py-2"} space-y-0.5`}>
           <MenuItem
             icon={<LayoutDashboard size={18} />}
             text="Dashboard"
@@ -155,37 +158,97 @@ export default function Sidebar() {
 }
 
 /**
- * Satu item menu di sidebar.
- * @param active - true jika halaman ini sedang dibuka
- * @param open   - true jika sidebar menampilkan teks (bukan hanya ikon)
+ * MenuItem — satu tombol menu di sidebar.
+ * Tooltip (mode ikon) di-portal agar tidak terpotong overflow.
  */
 function MenuItem({ icon, text, active, onClick, open = true }) {
+  const itemRef = useRef(null);
+  const [tip, setTip] = useState(null); // { top, left } | null
+
+  const showTip = () => {
+    if (open || !itemRef.current) return;
+    const rect = itemRef.current.getBoundingClientRect();
+    setTip({
+      top: rect.top + rect.height / 2,
+      left: rect.right + 10,
+    });
+  };
+
+  const hideTip = () => setTip(null);
+
+  // Sembunyikan tip saat sidebar dibuka kembali
+  useEffect(() => {
+    if (open) hideTip();
+  }, [open]);
+
   return (
-    <div
-      onClick={onClick}
-      title={!open ? text : undefined} // tooltip saat mode ikon
+    <button
+      type="button"
+      ref={itemRef}
+      onClick={() => {
+        hideTip();
+        onClick();
+      }}
+      onMouseEnter={showTip}
+      onMouseLeave={hideTip}
+      onFocus={showTip}
+      onBlur={hideTip}
+      aria-current={active ? "page" : undefined}
+      aria-label={text}
       className={`
       menu-item-motion
-      h-[46px]
+      w-full
+      h-[42px]
       flex
       items-center
-      border-b
-      border-hydro-border
+      rounded-xl
       cursor-pointer
-      ${open ? "gap-2.5 px-4" : "justify-center px-0"}
+      border-0
+      text-left
+      ${open ? "gap-2.5 px-3" : "justify-center px-0 mx-1.5 w-[calc(100%-0.75rem)]"}
       ${
         active
-          ? "nav-active-bar bg-hydro-accent-soft font-medium text-hydro-primary"
-          : "text-hydro-muted hover:bg-hydro-bg2 hover:text-hydro-ink"
+          ? "nav-active-bar nav-item-active bg-hydro-accent-soft font-semibold text-hydro-primary"
+          : "bg-transparent text-hydro-muted hover:bg-hydro-bg2/70 hover:text-hydro-ink"
       }
       `}
     >
-      {icon}
+      <span className={active ? "text-hydro-primary" : "text-current"}>
+        {icon}
+      </span>
       {open && (
-        <span className="text-[0.86rem] whitespace-nowrap">
-          {text}
-        </span>
+        <span className="text-[0.84rem] whitespace-nowrap">{text}</span>
       )}
-    </div>
+
+      {!open &&
+        tip &&
+        createPortal(
+          <div
+            role="tooltip"
+            className="
+              fixed z-[200] pointer-events-none
+              px-2.5 py-1.5 rounded-md
+              bg-hydro-primary text-white
+              text-[0.72rem] font-medium whitespace-nowrap
+              shadow-[0_6px_16px_rgba(15,107,92,0.22)]
+            "
+            style={{
+              top: tip.top,
+              left: tip.left,
+              transform: "translateY(-50%)",
+            }}
+          >
+            <span
+              aria-hidden
+              className="
+                absolute right-full top-1/2 -translate-y-1/2
+                border-[5px] border-transparent border-r-hydro-primary
+              "
+            />
+            {text}
+          </div>,
+          document.body
+        )}
+    </button>
   );
 }

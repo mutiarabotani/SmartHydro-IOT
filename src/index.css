@@ -1,33 +1,36 @@
 /*
  * index.css — tema global SmartHydro-AI (Aqua Lab / Precision Grow)
  *
- * Isi file:
- * 1. @theme     → token warna & font (dipakai class Tailwind seperti bg-hydro-primary)
- * 2. @layer base→ style dasar html/body, tombol, scrollbar
- * 3. utilities  → class siap pakai: panel, animasi, sidebar, stagger, dll
- * 4. @keyframes → definisi animasi modern
+ * Untuk apa:
+ * File gaya tunggal aplikasi (Tailwind CSS v4). Tidak ada file CSS lain.
+ *
+ * Isi:
+ * 1. @theme      → token warna & font (bg-hydro-primary, font-display, dll)
+ * 2. @layer base → style dasar html/body, tombol, scrollbar
+ * 3. utilities   → panel, chip, tabel, animasi, sidebar, stagger, dll
+ * 4. @keyframes  → definisi animasi modern
  */
 
 @import "tailwindcss";
 
-/* ===== Token desain (warna + font) ===== */
+/* ===== Token desain (warna + font) — seimbang & modern ===== */
 @theme {
   --font-display: "Sora", sans-serif; /* judul */
   --font-sans: "IBM Plex Sans", sans-serif; /* teks biasa */
 
-  --color-hydro-ink: #0f1c1a; /* teks utama */
-  --color-hydro-muted: #5a6b66; /* teks sekunder */
-  --color-hydro-primary: #0f6b5c; /* teal utama */
-  --color-hydro-primary-hover: #0c574b;
-  --color-hydro-accent: #2bb8a8; /* aksen aqua */
-  --color-hydro-accent-soft: #d8f3ef; /* latar lembut */
-  --color-hydro-bg: #f3f7f5;
-  --color-hydro-bg2: #e8f1ee;
+  --color-hydro-ink: #122421; /* teks utama — soft charcoal-teal */
+  --color-hydro-muted: #627570; /* teks sekunder — kontras cukup, tidak pudar */
+  --color-hydro-primary: #0e6a5c; /* teal utama */
+  --color-hydro-primary-hover: #0b5549;
+  --color-hydro-accent: #2aaea0; /* aksen aqua */
+  --color-hydro-accent-soft: #e3f6f2; /* latar lembut */
+  --color-hydro-bg: #f2f6f4;
+  --color-hydro-bg2: #e7f0ec;
   --color-hydro-surface: #ffffff;
-  --color-hydro-border: #c5d5cf;
-  --color-hydro-warn: #d97706;
-  --color-hydro-danger: #c45c5c;
-  --color-hydro-ok: #0f6b5c;
+  --color-hydro-border: #d0ddd8; /* border lebih soft */
+  --color-hydro-warn: #c9841d;
+  --color-hydro-danger: #c45b5b;
+  --color-hydro-ok: #0e6a5c;
 }
 
 /* ===== Style dasar halaman ===== */
@@ -42,13 +45,19 @@
   body,
   #root {
     height: 100%;
+    height: 100dvh; /* tinggi dinamis: tidak tertutup chrome/nav bar HP */
     overflow: hidden;
   }
 
   body {
     margin: 0;
     padding: 0;
+    /* Safe area notch / gesture bar (iOS + Android) */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--color-hydro-bg);
     background-image:
       radial-gradient(ellipse 80% 50% at 0% 0%, rgba(43, 184, 168, 0.12), transparent 55%),
@@ -72,6 +81,29 @@
   h3 {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
+  }
+
+  /* Nama kolom tabel: lebih tegas dari isi baris */
+  th {
+    font-weight: 600;
+  }
+
+  /* Date / input: hover & focus mengikuti tema */
+  input[type="date"],
+  input[type="text"],
+  input[type="number"] {
+    accent-color: var(--color-hydro-primary);
+  }
+
+  input[type="date"]:hover {
+    border-color: var(--color-hydro-accent);
+    background-color: var(--color-hydro-accent-soft);
+  }
+
+  input[type="date"]:focus {
+    border-color: var(--color-hydro-accent);
+    background-color: var(--color-hydro-accent-soft);
+    outline: none;
   }
 
   button {
@@ -131,23 +163,306 @@
     background: transparent;
   }
 
-  /* Kartu/panel kaca putih */
+  /*
+   * Tinggi penuh layar yang aman di mobile.
+   * 100dvh menyesuaikan toolbar browser; fallback 100vh untuk browser lama.
+   */
+  .app-screen {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /*
+   * Spacer bawah area konten scrollable (via ::after supaya tidak
+   * bentrok dengan padding Tailwind p-3/p-4).
+   * Menghindari konten paling bawah ketutup gesture bar / nav bar HP.
+   */
+  .page-scroll::after {
+    content: "";
+    display: block;
+    height: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+  }
+
+  @media (max-width: 767px) {
+    .page-scroll::after {
+      /* ekstra ruang di HP: gesture bar sering ~40–48px */
+      height: calc(2.75rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+
+  /* Kartu/panel kaca putih — elevasi lembut, tidak “melompat” berlebihan */
   .panel {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--color-hydro-border);
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 0 rgba(15, 107, 92, 0.04);
+    border-radius: 1rem;
+    box-shadow:
+      0 1px 0 rgba(15, 106, 92, 0.03),
+      0 8px 24px rgba(18, 36, 33, 0.03);
     transition:
       transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 0.28s ease,
       border-color 0.25s ease;
   }
 
+  /* Hover lift hanya untuk kartu interaktif — panel besar tetap tenang */
+  .panel-lift:hover {
+    transform: translateY(-1px);
+    border-color: #b7cdc6;
+    box-shadow:
+      0 1px 0 rgba(15, 106, 92, 0.04),
+      0 14px 32px rgba(15, 106, 92, 0.08);
+  }
+
   .panel:hover {
-    transform: translateY(-2px);
-    border-color: #a8c4bb;
-    box-shadow: 0 10px 28px rgba(15, 107, 92, 0.08);
+    border-color: #c5d6d0;
+  }
+
+  /* Judul section di dalam panel */
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-hydro-ink);
+    letter-spacing: -0.01em;
+  }
+
+  .section-sub {
+    font-size: 0.78rem;
+    color: var(--color-hydro-muted);
+    line-height: 1.45;
+  }
+
+  /* Header berwarna untuk section card (Dashboard, dll) */
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.7rem 0.9rem;
+    background: linear-gradient(
+      105deg,
+      var(--color-hydro-accent-soft) 0%,
+      rgba(227, 246, 242, 0.45) 55%,
+      rgba(255, 255, 255, 0.65) 100%
+    );
+    border-bottom: 1px solid rgba(14, 106, 92, 0.1);
+  }
+
+  .panel-header .section-title {
+    color: var(--color-hydro-primary);
+  }
+
+  .panel-body {
+    padding: 0.85rem 0.9rem;
+  }
+
+  @media (min-width: 640px) {
+    .panel-header {
+      padding: 0.8rem 1rem;
+    }
+
+    .panel-body {
+      padding: 1rem;
+    }
+  }
+
+  /* Tombol primer / sekunder — konsisten di seluruh app */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.65rem;
+    background: var(--color-hydro-primary);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border: 1px solid transparent;
+    box-shadow: 0 6px 16px rgba(14, 106, 92, 0.18);
+    cursor: pointer;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-hydro-primary-hover);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.65rem;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--color-hydro-muted);
+    font-weight: 600;
+    font-size: 0.8rem;
+    border: 1px solid var(--color-hydro-border);
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    color: var(--color-hydro-primary);
+    border-color: var(--color-hydro-accent);
+    background: var(--color-hydro-accent-soft);
+  }
+
+  .btn-secondary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn-link {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-hydro-primary);
+    cursor: pointer;
+  }
+
+  .btn-link:hover {
+    color: var(--color-hydro-primary-hover);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* Input teks tema (search, form sederhana) */
+  .field-input {
+    border: 1px solid var(--color-hydro-border);
+    border-radius: 0.65rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--color-hydro-ink);
+    outline: none;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .field-input:hover {
+    border-color: var(--color-hydro-accent);
+    background: var(--color-hydro-accent-soft);
+  }
+
+  .field-input:focus {
+    border-color: var(--color-hydro-accent);
+    background: var(--color-hydro-accent-soft);
+    box-shadow: 0 0 0 3px rgba(42, 174, 160, 0.18);
+  }
+
+  /* Chip status kecil */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+
+  .chip-ok {
+    background: var(--color-hydro-accent-soft);
+    color: var(--color-hydro-primary);
+    border-color: rgba(14, 106, 92, 0.12);
+  }
+
+  .chip-warn {
+    background: #fff6e8;
+    color: var(--color-hydro-warn);
+    border-color: rgba(201, 132, 29, 0.18);
+  }
+
+  .chip-danger {
+    background: #fdeeee;
+    color: var(--color-hydro-danger);
+    border-color: rgba(196, 91, 91, 0.18);
+  }
+
+  .chip-muted {
+    background: var(--color-hydro-bg2);
+    color: var(--color-hydro-muted);
+    border-color: var(--color-hydro-border);
+  }
+
+  /* Bingkai luar tabel — sama tipis & warna dengan garis antar sel */
+  .table-scroll:has(.hydro-table) {
+    border: 1px solid var(--color-hydro-border);
+    border-radius: 0.65rem;
+    overflow: auto;
+    background: rgba(255, 255, 255, 0.55);
+  }
+
+  /* Tabel — grid penuh dengan garis pemisah antar sel */
+  .hydro-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    border: 0;
+  }
+
+  .hydro-table th,
+  .hydro-table td {
+    border: 1px solid var(--color-hydro-border);
+    padding: 0.55rem 0.5rem;
+    text-align: center;
+  }
+
+  .hydro-table th {
+    background: rgba(227, 246, 242, 0.9);
+    color: var(--color-hydro-muted);
+    font-weight: 600;
+  }
+
+  .hydro-table td {
+    color: var(--color-hydro-ink);
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .hydro-table tbody tr:hover td {
+    background: rgba(227, 246, 242, 0.45);
+  }
+
+  .hydro-table .text-left {
+    text-align: left;
+  }
+
+  .sensor-tile {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(227, 246, 242, 0.35) 100%
+    );
+    border: 1px solid var(--color-hydro-border);
+    border-radius: 0.85rem;
+    padding: 0.85rem 0.75rem;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  /* Hover lift hanya jika tile memang bisa diklik */
+  .sensor-tile-interactive {
+    cursor: pointer;
+  }
+
+  .sensor-tile-interactive:hover {
+    border-color: #b7cdc6;
+    box-shadow: 0 8px 20px rgba(15, 106, 92, 0.07);
+    transform: translateY(-1px);
   }
 
   .status-pulse {
@@ -168,6 +483,27 @@
 
   .toast-enter {
     animation: hydro-toast-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Pop-up pemberitahuan tengah layar */
+  .alert-pop {
+    animation: hydro-alert-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .alert-icon-success {
+    animation: hydro-icon-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .alert-icon-info {
+    animation: hydro-icon-float 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .alert-icon-warn {
+    animation: hydro-icon-shake 0.55s ease both;
+  }
+
+  .alert-icon-error {
+    animation: hydro-icon-error 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .backdrop-enter {
@@ -200,7 +536,8 @@
       transform 0.2s ease;
   }
 
-  .menu-item-motion:hover {
+  /* Hover geser hanya untuk item tidak aktif — biar tidak bentrok dengan highlight aktif */
+  .menu-item-motion:hover:not(.nav-item-active) {
     transform: translateX(2px);
   }
 
@@ -208,16 +545,22 @@
     position: relative;
   }
 
+  /* Menu halaman aktif: aksen kiri + latar lembut (satu gaya saja) */
   .nav-active-bar::before {
     content: "";
     position: absolute;
-    left: 0;
+    left: 6px;
     top: 10px;
     bottom: 10px;
     width: 3px;
     border-radius: 999px;
-    background: var(--color-hydro-accent);
+    background: var(--color-hydro-primary);
     animation: hydro-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-item-active:hover {
+    background: var(--color-hydro-accent-soft);
+    color: var(--color-hydro-primary);
   }
 
   .sidebar-shell {
@@ -253,6 +596,113 @@
     border-radius: 999px;
     background: var(--color-hydro-accent);
     animation: hydro-ripple 2s ease-out infinite;
+  }
+
+  /*
+   * Tooltip bertema (ganti title bawaan browser yang biasanya hitam).
+   * Pakai: class="tip-theme" data-tip="teks"
+   */
+  .tip-theme[data-tip] {
+    position: relative;
+  }
+
+  .tip-theme[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-4px);
+    z-index: 80;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.45rem;
+    background: var(--color-hydro-primary);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(15, 107, 92, 0.22);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease,
+      visibility 0.16s ease;
+  }
+
+  .tip-theme[data-tip]::before {
+    content: "";
+    position: absolute;
+    left: calc(100% + 4px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 80;
+    border: 5px solid transparent;
+    border-right-color: var(--color-hydro-primary);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.16s ease,
+      visibility 0.16s ease;
+  }
+
+  .tip-theme[data-tip]:hover::after,
+  .tip-theme[data-tip]:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+  }
+
+  .tip-theme[data-tip]:hover::before,
+  .tip-theme[data-tip]:focus-visible::before {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Varian tooltip di bawah elemen (untuk ikon navbar, dsb.) */
+  .tip-theme-bottom[data-tip]::after {
+    left: 50%;
+    top: calc(100% + 8px);
+    transform: translateX(-50%) translateY(-4px);
+  }
+
+  .tip-theme-bottom[data-tip]::before {
+    left: 50%;
+    top: calc(100% + 0px);
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-bottom-color: var(--color-hydro-primary);
+    border-right-color: transparent;
+  }
+
+  .tip-theme-bottom[data-tip]:hover::after,
+  .tip-theme-bottom[data-tip]:focus-visible::after {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Varian tooltip di atas elemen (agar tidak kepotong overflow card) */
+  .tip-theme-top[data-tip]::after {
+    left: 50%;
+    top: auto;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  .tip-theme-top[data-tip]::before {
+    left: 50%;
+    top: auto;
+    bottom: calc(100% + 0px);
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--color-hydro-primary);
+    border-right-color: transparent;
+  }
+
+  .tip-theme-top[data-tip]:hover::after,
+  .tip-theme-top[data-tip]:focus-visible::after {
+    transform: translateX(-50%) translateY(0);
   }
 }
 
@@ -312,6 +762,76 @@
   }
 }
 
+@keyframes hydro-alert-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes hydro-icon-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes hydro-icon-float {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hydro-icon-shake {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-8deg);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.05) rotate(6deg);
+  }
+  70% {
+    transform: scale(1) rotate(-3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes hydro-icon-error {
+  0% {
+    opacity: 0;
+    transform: scale(0.35) rotate(-12deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
 @keyframes hydro-backdrop-in {
   from {
     opacity: 0;
@@ -357,6 +877,22 @@
   }
 }
 
+/* Progress bar splash boot — ringan, CSS only */
+@keyframes app-splash-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.app-splash-bar {
+  width: 100%;
+  transform: translateX(-100%);
+  animation: app-splash-bar 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @keyframes hydro-ripple {
   0% {
     transform: scale(1);
@@ -377,7 +913,10 @@
     transition-duration: 0.01ms !important;
   }
 
-  .panel:hover {
+  .panel-lift:hover,
+  .sensor-tile-interactive:hover {
     transform: none;
   }
 }
+
+

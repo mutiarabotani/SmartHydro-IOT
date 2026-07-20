@@ -1,19 +1,23 @@
 /**
- * Dashboard.jsx — halaman beranda SmartHydro-AI.
+ * Dashboard.jsx — halaman beranda SmartHydro-AI (presentation layer).
  *
- * Menampilkan:
- * 1. Kartu 6 parameter sensor (data simulasi real-time tiap 3 detik)
- * 2. Status sistem & perangkat
+ * Untuk apa:
+ * 1. Kartu 6 parameter sensor (simulasi real-time tiap 3 detik)
+ * 2. Status sistem & perangkat (sinkron DevicesContext)
  * 3. Cuplikan log sistem
  * 4. Ringkasan prediksi AI + rekomendasi
  *
- * Layout: Sidebar + Navbar sticky; hanya area konten yang di-scroll.
+ * Layout: PageShell (Sidebar + Navbar + area scroll).
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
-import { useToast } from "../context/ToastContext";
+import { PageShell } from "../components/layout";
+import {
+  useSettings,
+  evaluateSensorStatus,
+  detectAnomalies,
+} from "../context/SettingsContext";
+import { useDevices } from "../context/DevicesContext";
 import {
   FlaskConical,
   Droplets,
@@ -26,51 +30,44 @@ import {
   Bot,
 } from "lucide-react";
 
-/** Baris label–nilai untuk panel Status Sistem */
-function Row({ label, value }) {
-  return (
-    <div className="flex justify-between items-center text-[0.8rem] text-hydro-muted">
-      <span>{label}</span>
+/** Map judul kartu → key ambang Setting */
+const SENSOR_KEY = {
+  "pH Level": "ph",
+  "EC / TDS": "ec",
+  Suhu: "suhu",
+  Kelembapan: "kelembapan",
+  Cahaya: "cahaya",
+  "Level Air": "levelAir",
+};
 
-      <div
-        className="
-        border
-        border-hydro-border
-        bg-hydro-accent-soft
-        text-hydro-primary
-        font-medium
-        px-2.5
-        py-0.5
-        min-w-[110px]
-        text-center
-        rounded-md
-        text-[0.78rem]
-        "
+/** Warna chip status mengikuti nilai (bukan selalu hijau) */
+function chipClassForValue(value) {
+  const v = String(value).toUpperCase();
+  if (["OFFLINE", "ERROR"].includes(v)) return "chip-danger";
+  if (v === "OFF") return "chip-danger";
+  if (["STANDBY", "MANUAL"].includes(v)) return "chip-muted";
+  if (v === "WARNING") return "chip-warn";
+  return "chip-ok";
+}
+
+/** Baris label–nilai untuk panel Status Sistem */
+function Row({ label, value, tone }) {
+  return (
+    <div className="flex justify-between items-center gap-3 text-[0.8rem]">
+      <span className="text-hydro-muted">{label}</span>
+      <span
+        className={`chip ${tone || chipClassForValue(value)} min-w-[96px] justify-center`}
       >
         {value}
-      </div>
+      </span>
     </div>
   );
 }
 
-/**
- * Tentukan status baca sensor berdasarkan ambang batas sederhana.
- * Mengembalikan "Optimal" atau "Perlu cek".
- */
-function sensorStatus(title, value) {
-  const v = Number(value);
-  if (title === "pH Level") return v >= 5.5 && v <= 6.5 ? "Optimal" : "Perlu cek";
-  if (title === "EC / TDS") return v >= 1.2 && v <= 2.0 ? "Optimal" : "Perlu cek";
-  if (title === "Suhu") return v >= 22 && v <= 28 ? "Optimal" : "Perlu cek";
-  if (title === "Kelembapan") return v >= 50 && v <= 80 ? "Optimal" : "Perlu cek";
-  if (title === "Cahaya") return v >= 300 ? "Optimal" : "Perlu cek";
-  if (title === "Level Air") return v >= 40 ? "Optimal" : "Perlu cek";
-  return "Optimal";
-}
-
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const { thresholds, control, iot, ai } = useSettings();
+  const { mode, actuators } = useDevices();
 
   // State nilai sensor (simulasi; nanti diganti fetch API)
   const [sensorData, setSensorData] = useState({
@@ -108,443 +105,425 @@ export default function Dashboard() {
     { title: "Level Air", value: sensorData.levelAir, unit: "%" },
   ];
 
-  /** Tombol rekomendasi → buka Device Control */
-  const openDevices = () => {
-    showToast("Membuka kontrol perangkat...", "info");
-    navigate("/device-control");
-  };
+  const anomalies = useMemo(
+    () => detectAnomalies(sensorData, thresholds),
+    [sensorData, thresholds]
+  );
+
+  const cloudLabel =
+    iot.platform === "mqtt" ? "MQTT" : "Cloud";
+
 
   return (
-    <div className="flex h-screen overflow-hidden page-shell">
-      <Sidebar />
-
-      <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
-        <Navbar />
-
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 page-enter content-stagger">
+    <PageShell>
           {/* ===== Kartu monitoring 6 parameter sensor ===== */}
-          <div className="panel p-4 card-enter">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <h2 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
-                Monitoring Parameter Hidroponik
-              </h2>
+          <div className="panel overflow-hidden p-0 card-enter">
+            <div className="panel-header">
+              <div className="min-w-0">
+                <h2 className="section-title">Monitoring Parameter Hidroponik</h2>
+                <p className="section-sub mt-0.5">Data sensor real-time (simulasi)</p>
+              </div>
               <button
                 type="button"
                 onClick={() => navigate("/monitoring")}
-                className="text-[0.75rem] font-medium text-hydro-primary hover:underline cursor-pointer"
+                className="btn-link shrink-0"
               >
-                Lihat detail
+                Lihat Monitoring
               </button>
             </div>
 
-            <div
-              className="
-              grid
-              grid-cols-2
-              sm:grid-cols-2
-              md:grid-cols-3
-              lg:grid-cols-3
-              xl:grid-cols-6
-              gap-2
-              sm:gap-3
-              "
-            >
-              {sensors.map((sensor, index) => (
-                <div
-                key={index}
-                className="
-                bg-white/80
-                border
-                border-hydro-border
-                rounded-lg
-                p-3
-                hover:border-hydro-accent
-                hover:shadow-sm
-                transition
-                "
-                style={{ animationDelay: `${index * 40}ms` }}
-                >
-                <div className="flex items-center justify-center gap-1.5 mb-1 text-hydro-primary">
-                {sensor.title === "pH Level" && <FlaskConical size={14} />}
-                {sensor.title === "EC / TDS" && <Droplets size={14} />}
-                {sensor.title === "Suhu" && <Thermometer size={14} />}
-                {sensor.title === "Kelembapan" && <Droplets size={14} />}
-                {sensor.title === "Cahaya" && <Sun size={14} />}
-                {sensor.title === "Level Air" && <Waves size={14} />}
-
-                <h3 className="text-[0.72rem] text-hydro-muted">
-                    {sensor.title}
-                </h3>
-                </div>
-
-                  <div className="flex items-end justify-center gap-1 mt-1.5">
-                    <span
-                      key={sensor.value}
-                      className="font-display text-xl font-semibold text-hydro-ink tabular-nums value-tick"
+            <div className="panel-body">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
+                {sensors.map((sensor, index) => {
+                  const status = evaluateSensorStatus(
+                    SENSOR_KEY[sensor.title],
+                    sensor.value,
+                    thresholds
+                  );
+                  return (
+                    <div
+                      key={index}
+                      className="sensor-tile"
+                      style={{ animationDelay: `${index * 40}ms` }}
                     >
-                      {sensor.value}
-                    </span>
+                      <div className="flex items-center justify-center gap-1.5 mb-1 text-hydro-primary">
+                        {sensor.title === "pH Level" && <FlaskConical size={14} />}
+                        {sensor.title === "EC / TDS" && <Droplets size={14} />}
+                        {sensor.title === "Suhu" && <Thermometer size={14} />}
+                        {sensor.title === "Kelembapan" && <Droplets size={14} />}
+                        {sensor.title === "Cahaya" && <Sun size={14} />}
+                        {sensor.title === "Level Air" && <Waves size={14} />}
 
-                    <span className="text-[0.7rem] text-hydro-muted mb-0.5">
-                      {sensor.unit}
-                    </span>
-                  </div>
+                        <h3 className="text-[0.72rem] font-medium text-hydro-muted">
+                          {sensor.title}
+                        </h3>
+                      </div>
 
-                  <div
-                    className={`w-full text-[0.72rem] mt-1.5 text-center font-medium ${
-                      sensorStatus(sensor.title, sensor.value) === "Optimal"
-                        ? "text-hydro-primary"
-                        : "text-hydro-warn"
-                    }`}
-                  >
-                    {sensorStatus(sensor.title, sensor.value)}
-                  </div>
-                </div>
-              ))}
+                      <div className="flex items-end justify-center gap-1 mt-1.5">
+                        <span
+                          key={sensor.value}
+                          className="font-display text-xl font-semibold text-hydro-ink tabular-nums value-tick"
+                        >
+                          {sensor.value}
+                        </span>
+
+                        <span className="text-[0.7rem] text-hydro-muted mb-0.5">
+                          {sensor.unit}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-center mt-2">
+                        <span
+                          className={`chip ${
+                            status === "Optimal" ? "chip-ok" : "chip-warn"
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* ===== Status perangkat + cuplikan log ===== */}
-          <div className="grid grid-cols-12 gap-3">
-            <div className="col-span-12 lg:col-span-4 panel p-4 card-enter">
-              <h2 className="font-display font-semibold text-[0.95rem] mb-3 text-hydro-ink">
-                Status Sistem & Perangkat
-              </h2>
+          <div className="grid grid-cols-12 gap-2 sm:gap-3 items-start">
+            <div className="col-span-12 lg:col-span-4 panel overflow-hidden p-0 card-enter h-fit">
+              <div className="panel-header">
+                <div className="min-w-0">
+                  <h2 className="section-title">Status Sistem & Perangkat</h2>
+                  <p className="section-sub mt-0.5">
+                    Mode, aktuator, dan koneksi IoT
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/device-control")}
+                  className="btn-link shrink-0"
+                >
+                  Device Control
+                </button>
+              </div>
 
-              <div className="space-y-2.5">
+              <div className="panel-body space-y-2.5">
+                <Row label="Mode Sistem" value={mode} />
                 <Row
-                  label="Mode Sistem"
-                  value="OTOMATIS"
+                  label="Rule-based"
+                  value={control.autoRuleBased ? "ON" : "OFF"}
+                  tone={control.autoRuleBased ? "chip-ok" : "chip-muted"}
                 />
-
                 <Row
                   label="Pompa Nutrisi"
-                  value="AKTIF"
+                  value={actuators.pompaNutrisi ? "ON" : "OFF"}
                 />
-
                 <Row
                   label="Pompa Air"
-                  value="AKTIF"
+                  value={actuators.pompaAir ? "ON" : "OFF"}
                 />
-
                 <Row
-                  label="Relay"
-                  value="AKTIF"
+                  label="Relay Tandon"
+                  value={actuators.relayTandon ? "ON" : "OFF"}
                 />
-
                 <Row
-                  label="Koneksi Cloud"
-                  value="TERHUBUNG"
+                  label="Servo Nutrisi"
+                  value={actuators.servoNutrisi ? "ON" : "STANDBY"}
+                />
+                <Row
+                  label={`IoT (${cloudLabel})`}
+                  value={iot.cloud ? "Online" : "Offline"}
                 />
               </div>
             </div>
 
             {/* LOG */}
-            <div className="col-span-12 lg:col-span-8 panel p-4 card-enter">
+            <div className="col-span-12 lg:col-span-8 panel overflow-hidden p-0 card-enter h-fit">
+              <div className="panel-header">
+                <div className="min-w-0">
+                  <h2 className="section-title">Log Sistem</h2>
+                  <p className="section-sub mt-0.5">
+                    Cuplikan aktivitas terbaru
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/log")}
+                  className="btn-link shrink-0"
+                >
+                  Lihat Log
+                </button>
+              </div>
 
-            <div className="flex items-center justify-between gap-2 mb-2.5">
-              <h2 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
-                Log Sistem
-              </h2>
-              <button
-                type="button"
-                onClick={() => navigate("/log")}
-                className="text-[0.75rem] font-medium text-hydro-primary hover:underline cursor-pointer"
-              >
-                Lihat semua
-              </button>
-            </div>
-
+              <div className="panel-body">
 <div className="max-h-[220px] overflow-y-auto table-scroll">
-  <table className="w-full min-w-[560px] text-[0.78rem] border border-hydro-border border-collapse">
+  <table className="hydro-table min-w-[560px]">
     <thead>
-      <tr className="bg-hydro-accent-soft/60">
-        <th className="border border-hydro-border w-8 py-1.5"></th>
-        <th className="border border-hydro-border text-center py-1.5 px-2 text-hydro-muted font-medium">
-          Waktu
-        </th>
-        <th className="border border-hydro-border text-center py-1.5 px-2 text-hydro-muted font-medium">
-          Level
-        </th>
-        <th className="border border-hydro-border text-center py-1.5 px-2 text-hydro-muted font-medium">
-          Sumber
-        </th>
-        <th className="border border-hydro-border text-center py-1.5 px-2 text-hydro-muted font-medium">
-          Pesan
-        </th>
-        <th className="border border-hydro-border text-center py-1.5 px-2 text-hydro-muted font-medium">
-          Tipe
-        </th>
+      <tr>
+        <th className="w-8"></th>
+        <th>Waktu</th>
+        <th>Level</th>
+        <th>Sumber</th>
+        <th>Pesan</th>
+        <th>Tipe</th>
       </tr>
     </thead>
 
     <tbody>
       <tr>
-        <td className="border border-hydro-border text-center py-2">
+        <td>
           <CheckCircle2
             size={14}
             className="mx-auto text-hydro-primary"
           />
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           10:23
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           INFO
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Sistem
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Pompa nutrisi dinyalakan otomatis
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Aktuasi
         </td>
       </tr>
 
       <tr>
-        <td className="border border-hydro-border text-center py-2">
+        <td>
           <CheckCircle2
             size={14}
             className="mx-auto text-hydro-primary"
           />
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           10:45
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           INFO
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Sistem
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Pengisian air otomatis 2,5 Liter
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Aktuasi
         </td>
       </tr>
 
       <tr>
-        <td className="border border-hydro-border text-center py-2">
+        <td>
           <AlertTriangle
             size={14}
             className="mx-auto text-hydro-warn"
           />
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           09:30
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           WARNING
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Sensor pH
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           pH turun, penyesuaian otomatis dilakukan
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Peringatan
         </td>
       </tr>
 
       <tr>
-        <td className="border border-hydro-border text-center py-2">
+        <td>
           <Bot
             size={14}
             className="mx-auto text-hydro-accent"
           />
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           08:15
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           INFO
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           AI Prediction
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           AI prediksi kebutuhan nutrisi dijalankan
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           AI
         </td>
       </tr>
 
       <tr>
-        <td className="border border-hydro-border text-center py-2">
+        <td>
           <CheckCircle2
             size={14}
             className="mx-auto text-hydro-primary"
           />
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           07:20
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           INFO
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Sistem
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Suhu kembali normal
         </td>
-        <td className="border border-hydro-border text-center px-2 py-2">
+        <td>
           Sensor
         </td>
       </tr>
     </tbody>
   </table>
 </div>
-</div>
-</div>
+              </div>
+            </div>
+          </div>
 
           {/* AI */}
-
-          <div className="panel p-4 card-enter">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <h2 className="font-display font-semibold text-[0.95rem] flex items-center gap-2 text-hydro-ink">
-                <Brain size={16} className="text-hydro-primary" />
-                Prediksi AI
-              </h2>
+          <div className="panel overflow-hidden p-0 card-enter">
+            <div className="panel-header">
+              <div className="min-w-0">
+                <h2 className="section-title flex items-center gap-2">
+                  <Brain size={16} />
+                  Prediksi AI
+                </h2>
+                <p className="section-sub mt-0.5">
+                  Ringkasan kebutuhan nutrisi, air, dan kondisi
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => navigate("/ai-prediction")}
-                className="text-[0.75rem] font-medium text-hydro-primary hover:underline cursor-pointer"
+                className="btn-link shrink-0"
               >
                 Buka AI Prediction
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div
-                className="
-                border
-                border-hydro-border
-                rounded-lg
-                p-3.5
-                bg-white/70
-                "
-              >
-                <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
-                  Prediksi Kebutuhan Nutrisi
-                </h3>
+            <div className="panel-body">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3 items-start">
+                <div className="border border-hydro-border rounded-xl p-3 bg-white/70 h-fit">
+                  <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
+                    Prediksi Kebutuhan Nutrisi
+                  </h3>
 
-                <div className="font-display text-2xl font-semibold mt-2 text-hydro-primary">
-                  320 ml
+                  <div className="font-display text-2xl font-semibold mt-2 text-hydro-primary">
+                    320 ml
+                  </div>
+
+                  <div className="mt-2 text-[0.75rem] text-hydro-muted">
+                    Confidence: 92%
+                  </div>
+
+                  <div className="w-full h-2 bg-hydro-bg2 rounded-full mt-1.5 overflow-hidden">
+                    <div
+                      className="h-2 bg-hydro-primary rounded-full bar-fill"
+                      style={{ width: "92%" }}
+                    />
+                  </div>
                 </div>
 
-                <div className="mt-2 text-[0.75rem] text-hydro-muted">
-                  Confidence: 92%
+                <div className="border border-hydro-border rounded-xl p-3 bg-white/70 h-fit">
+                  <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
+                    Prediksi Kebutuhan Air
+                  </h3>
+
+                  <div className="font-display text-2xl font-semibold mt-2 text-hydro-accent">
+                    2.4 L
+                  </div>
+
+                  <div className="mt-2 text-[0.75rem] text-hydro-muted">
+                    Confidence: 89%
+                  </div>
+
+                  <div className="w-full h-2 bg-hydro-bg2 rounded-full mt-1.5 overflow-hidden">
+                    <div
+                      className="h-2 bg-hydro-accent rounded-full bar-fill"
+                      style={{ width: "89%" }}
+                    />
+                  </div>
                 </div>
 
-                <div className="w-full h-2 bg-hydro-bg2 rounded-full mt-1.5 overflow-hidden">
+                <div className="border border-hydro-border rounded-xl p-3 bg-white/70 h-fit">
+                  <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
+                    Deteksi Kondisi
+                  </h3>
+
                   <div
-                    className="h-2 bg-hydro-primary rounded-full bar-fill"
-                    style={{ width: "92%" }}
-                  />
-                </div>
-              </div>
-
-              <div
-                className="
-                border
-                border-hydro-border
-                rounded-lg
-                p-3.5
-                bg-white/70
-                "
-              >
-                <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
-                  Prediksi Kebutuhan Air
-                </h3>
-
-                <div className="font-display text-2xl font-semibold mt-2 text-hydro-accent">
-                  2.4 L
-                </div>
-
-                <div className="mt-2 text-[0.75rem] text-hydro-muted">
-                  Confidence: 89%
-                </div>
-
-                <div className="w-full h-2 bg-hydro-bg2 rounded-full mt-1.5 overflow-hidden">
-                  <div
-                    className="h-2 bg-hydro-accent rounded-full bar-fill"
-                    style={{ width: "89%" }}
-                  />
-                </div>
-              </div>
-
-              <div
-                className="
-                border
-                border-hydro-border
-                rounded-lg
-                p-3.5
-                text-center
-                bg-white/70
-                "
-              >
-                <h3 className="font-display font-medium text-[0.85rem] text-hydro-ink">
-                  Deteksi Kondisi
-                </h3>
-
-                <div className="mt-2 flex justify-center text-hydro-primary">
-                  <CheckCircle2 size={36} />
-                </div>
-
-                <div className="font-display font-semibold text-[0.9rem] text-hydro-primary mt-2">
-                  NORMAL
+                    className={`mt-2 flex items-center gap-2 ${
+                      anomalies.length ? "text-hydro-warn" : "text-hydro-primary"
+                    }`}
+                  >
+                    {anomalies.length ? (
+                      <AlertTriangle size={22} />
+                    ) : (
+                      <CheckCircle2 size={22} />
+                    )}
+                    <span className="font-display font-semibold text-[0.95rem]">
+                      {anomalies.length ? "ANOMALI" : "NORMAL"}
+                    </span>
+                  </div>
+                  <p className="text-[0.75rem] text-hydro-muted mt-2 leading-snug">
+                    {anomalies.length
+                      ? `${anomalies[0].label}${
+                          anomalies.length > 1 ? ` (+${anomalies.length - 1})` : ""
+                        }`
+                      : "Semua parameter dalam batas aman"}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* REKOMENDASI */}
-
-          <div className="panel p-4 card-enter">
-            <h2 className="font-display font-semibold text-[0.95rem] mb-2.5 text-hydro-ink">
-              Rekomendasi AI
-            </h2>
-
-            <div className="flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center">
-              <p className="max-w-4xl text-[0.85rem] text-hydro-muted leading-relaxed">
-                Sistem dalam kondisi normal. AI
-                merekomendasikan penambahan nutrisi
-                sebanyak 160 ml dalam 3 jam ke depan
-                untuk menjaga kestabilan larutan.
-              </p>
-
+          <div className="panel overflow-hidden p-0 card-enter">
+            <div className="panel-header">
+              <div className="min-w-0">
+                <h2 className="section-title">Rekomendasi AI</h2>
+                <p className="section-sub mt-0.5">
+                  {ai.enabled
+                    ? "Decision support untuk koreksi nutrisi & air"
+                    : "Modul AI nonaktif di Setting"}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={openDevices}
-                className="
-                bg-hydro-primary
-                text-white
-                px-3.5
-                py-1.5
-                rounded-lg
-                hover:bg-hydro-primary-hover
-                transition
-                font-medium
-                text-[0.8rem]
-                whitespace-nowrap
-                w-full
-                sm:w-auto
-                cursor-pointer
-                "
+                onClick={() => navigate("/ai-prediction")}
+                className="btn-link shrink-0"
               >
-                Buka Kontrol Perangkat
+                Lihat AI Prediction
               </button>
             </div>
+
+            <div className="panel-body">
+              <p className="text-[0.85rem] text-hydro-muted leading-relaxed">
+                {!ai.enabled
+                  ? "Prediksi AI dinonaktifkan. Aktifkan di Setting untuk menampilkan rekomendasi korektif."
+                  : anomalies.length
+                    ? `Terdeteksi ${anomalies.length} anomali (${anomalies
+                        .map((a) => a.label)
+                        .join(", ")}). AI merekomendasikan koreksi nutrisi/air — decision support, bukan kontrol penuh.`
+                    : "Sistem dalam kondisi normal. AI merekomendasikan penambahan nutrisi sebanyak 160 ml dalam 3 jam ke depan untuk menjaga kestabilan larutan."}
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }

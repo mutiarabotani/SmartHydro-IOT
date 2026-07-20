@@ -1,25 +1,22 @@
 /**
- * Monitoring.jsx — halaman pemantauan sensor hidroponik.
+ * Monitoring.jsx — halaman pemantauan sensor hidroponik (presentation layer).
  *
- * Fitur:
+ * Untuk apa:
  * - Filter tanggal (data mock per tanggal)
- * - Kartu nilai terkini 6 parameter
- * - 6 grafik garis (Recharts) per parameter
- * - Tabel riwayat sensor
+ * - Kartu nilai terkini 6 parameter sensor
+ * - 6 grafik garis via SensorChart (Recharts)
+ * - Tabel riwayat sensor + pagination
+ *
+ * Layout: PageShell (Sidebar + Navbar + area scroll).
  */
-import { useMemo, useState } from "react";
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
-
+import { useEffect, useMemo, useState } from "react";
+import { PageShell } from "../components/layout";
+import { SensorChart } from "../components/charts";
+import { TablePager, TablePageSize, paginateRows, ThemeDatePicker } from "../components/ui";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from "recharts";
+  useSettings,
+  evaluateSensorStatus,
+} from "../context/SettingsContext";
 
 import {
   FlaskConical,
@@ -40,62 +37,55 @@ const HISTORY = [
   { waktu: "12:00", date: "2026-07-16", ph: 5.88, ec: 1.57, suhu: 24.9, kelembapan: 65, cahaya: 490, levelAir: 75 },
 ];
 
-/** Kartu satu grafik garis untuk satu parameter sensor */
-function ChartCard({ title, data, color, dataKey = "nilai" }) {
-  return (
-    <div className="panel h-[180px] sm:h-[190px] p-3 card-enter">
-      <h3 className="font-display font-medium text-[0.85rem] mb-2 text-hydro-ink">
-        {title}
-      </h3>
-      <ResponsiveContainer width="100%" height="80%">
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#c5d5cf" />
-          <XAxis dataKey="waktu" stroke="#5a6b66" tick={{ fontSize: 11 }} />
-          <YAxis stroke="#5a6b66" tick={{ fontSize: 11 }} width={32} />
-          <Tooltip />
-          <Line
-            type="monotone"
-            dataKey={dataKey}
-            stroke={color}
-            strokeWidth={2.5}
-            dot={{ fill: color, r: 2.5 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-/** Kartu ringkas nilai sensor di bagian atas halaman */
+/** Kartu ringkas nilai sensor — selaras pola Dashboard */
 function SensorCard({ icon, title, value, unit, status }) {
   return (
-    <div className="panel min-h-[88px] h-auto py-3 px-3 flex items-center justify-center gap-2.5">
-      <span className="icon-pop shrink-0">{icon}</span>
-      <div>
-        <h3 className="text-[0.7rem] text-hydro-muted">{title}</h3>
-        <div
-          key={String(value)}
-          className="font-display text-base font-semibold text-hydro-ink value-tick"
-        >
-          {value}{unit}
-        </div>
-        <div className="text-hydro-primary text-[0.7rem] font-medium">
+    <div className="sensor-tile text-center">
+      <div className="flex items-center justify-center gap-1.5 mb-1 text-hydro-primary">
+        <span className="icon-pop shrink-0">{icon}</span>
+        <h3 className="text-[0.72rem] font-medium text-hydro-muted">{title}</h3>
+      </div>
+      <div
+        key={String(value)}
+        className="font-display text-xl font-semibold text-hydro-ink tabular-nums value-tick"
+      >
+        {value}
+        {unit ? (
+          <span className="text-[0.7rem] font-medium text-hydro-muted ml-0.5">
+            {unit}
+          </span>
+        ) : null}
+      </div>
+      <div className="flex justify-center mt-2">
+        <span className={`chip ${status === "Optimal" ? "chip-ok" : "chip-warn"}`}>
           {status}
-        </div>
+        </span>
       </div>
     </div>
   );
 }
 
 export default function Monitoring() {
+  const { thresholds } = useSettings();
   const today = new Date().toISOString().split("T")[0];
   // Tanggal yang dipilih untuk filter data
   const [date, setDate] = useState("2026-07-17");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Baris riwayat yang cocok dengan tanggal terpilih
   const rows = useMemo(
     () => HISTORY.filter((row) => row.date === date),
     [date]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [date]);
+
+  const paged = useMemo(
+    () => paginateRows(rows, page, pageSize),
+    [rows, page, pageSize]
   );
 
   // Nilai terbaru (baris pertama) untuk kartu sensor
@@ -110,151 +100,143 @@ export default function Monitoring() {
   const waterData = rows.map((r) => ({ waktu: r.waktu, nilai: r.levelAir })).reverse();
 
   return (
-    <div className="flex h-screen overflow-hidden page-shell">
-      <Sidebar />
-
-      <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
-        <Navbar
-          title="Monitoring"
-          subtitle="Pemantauan Sensor Hidroponik"
-        />
-
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 page-enter content-stagger">
-
-          <div className="flex justify-end items-center gap-2 mb-3 sm:mb-4">
+    <PageShell
+      title="Monitoring"
+      subtitle="Pemantauan Sensor Hidroponik"
+    >
+          <div className="flex justify-end items-center gap-2">
             <span className="text-[0.8rem] font-medium text-hydro-muted">
               Tanggal
             </span>
-            <input
-              type="date"
+            <ThemeDatePicker
               value={date}
               max={today}
-              onChange={(e) => setDate(e.target.value)}
-              className="
-              border
-              border-hydro-border
-              rounded-lg
-              px-2.5
-              py-1.5
-              text-[0.8rem]
-              bg-white/90
-              text-hydro-ink
-              focus:outline-none
-              focus:border-hydro-accent
-              "
+              onChange={setDate}
+              aria-label="Filter tanggal monitoring"
             />
           </div>
 
           {!latest ? (
-            <div className="panel p-8 text-center text-hydro-muted text-[0.85rem] mb-4">
+            <div className="panel p-8 text-center text-hydro-muted text-[0.85rem]">
               Tidak ada data sensor untuk tanggal yang dipilih. Coba tanggal 16–17 Jul 2026.
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3 mb-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3 items-start">
                 <SensorCard
-                  icon={<FlaskConical size={22} className="text-hydro-primary shrink-0" />}
+                  icon={<FlaskConical size={14} className="shrink-0" />}
                   title="pH Level"
                   value={latest.ph}
                   unit=""
-                  status="Optimal"
+                  status={evaluateSensorStatus("ph", latest.ph, thresholds)}
                 />
                 <SensorCard
-                  icon={<Droplets size={22} className="text-hydro-primary shrink-0" />}
+                  icon={<Droplets size={14} className="shrink-0" />}
                   title="EC / TDS"
                   value={latest.ec}
                   unit=""
-                  status="Optimal"
+                  status={evaluateSensorStatus("ec", latest.ec, thresholds)}
                 />
                 <SensorCard
-                  icon={<Thermometer size={22} className="text-hydro-primary shrink-0" />}
+                  icon={<Thermometer size={14} className="shrink-0" />}
                   title="Suhu"
                   value={latest.suhu}
                   unit="°C"
-                  status="Optimal"
+                  status={evaluateSensorStatus("suhu", latest.suhu, thresholds)}
                 />
                 <SensorCard
-                  icon={<Droplets size={22} className="text-hydro-primary shrink-0" />}
+                  icon={<Droplets size={14} className="shrink-0" />}
                   title="Kelembapan"
                   value={latest.kelembapan}
                   unit="%"
-                  status="Optimal"
+                  status={evaluateSensorStatus(
+                    "kelembapan",
+                    latest.kelembapan,
+                    thresholds
+                  )}
                 />
                 <SensorCard
-                  icon={<Sun size={22} className="text-hydro-warn shrink-0" />}
+                  icon={<Sun size={14} className="shrink-0" />}
                   title="Cahaya"
                   value={latest.cahaya}
                   unit=""
-                  status="Optimal"
+                  status={evaluateSensorStatus("cahaya", latest.cahaya, thresholds)}
                 />
                 <SensorCard
-                  icon={<Waves size={22} className="text-hydro-accent shrink-0" />}
+                  icon={<Waves size={14} className="shrink-0" />}
                   title="Level Air"
                   value={latest.levelAir}
                   unit="%"
-                  status="Optimal"
+                  status={evaluateSensorStatus(
+                    "levelAir",
+                    latest.levelAir,
+                    thresholds
+                  )}
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 mb-3">
-                <ChartCard title="Grafik pH" data={phData} color="#0f6b5c" />
-                <ChartCard title="Grafik EC / TDS" data={ecData} color="#2bb8a8" />
-                <ChartCard title="Grafik Suhu (°C)" data={suhuData} color="#d97706" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 items-start">
+                <SensorChart title="Grafik pH" data={phData} color="#0f6b5c" />
+                <SensorChart title="Grafik EC / TDS" data={ecData} color="#2bb8a8" />
+                <SensorChart title="Grafik Suhu (°C)" data={suhuData} color="#d97706" />
+                <SensorChart title="Grafik Kelembapan (%)" data={humData} color="#1b8f9e" />
+                <SensorChart title="Grafik Cahaya (Lux)" data={lightData} color="#c4a014" />
+                <SensorChart title="Grafik Level Air (%)" data={waterData} color="#0f6b5c" />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 mb-4">
-                <ChartCard title="Grafik Kelembapan (%)" data={humData} color="#1b8f9e" />
-                <ChartCard title="Grafik Cahaya (Lux)" data={lightData} color="#c4a014" />
-                <ChartCard title="Grafik Level Air (%)" data={waterData} color="#0f6b5c" />
+              <div className="panel p-3 sm:p-4 card-enter">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <h3 className="section-title">
+                    Riwayat Data Sensor
+                  </h3>
+                  <TablePageSize
+                    pageSize={pageSize}
+                    onPageSizeChange={setPageSize}
+                    onPageChange={setPage}
+                  />
+                </div>
+
+                <div className="max-h-[280px] overflow-y-auto table-scroll">
+                  <table className="hydro-table min-w-[640px]">
+                    <thead className="sticky top-0 z-[1]">
+                      <tr>
+                        <th>Waktu</th>
+                        <th>pH Level</th>
+                        <th>EC/TDS (mS/cm)</th>
+                        <th>Suhu °C</th>
+                        <th>Kelembapan (%)</th>
+                        <th>Cahaya (Lux)</th>
+                        <th>Level Air (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paged.rows.map((row) => (
+                        <tr key={`${row.date}-${row.waktu}`}>
+                          <td>{row.waktu}</td>
+                          <td>{row.ph}</td>
+                          <td>{row.ec}</td>
+                          <td>{row.suhu}</td>
+                          <td>{row.kelembapan}</td>
+                          <td>{row.cahaya}</td>
+                          <td>{row.levelAir}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <TablePager
+                  pageSize={pageSize}
+                  page={paged.page}
+                  onPageChange={setPage}
+                  total={paged.total}
+                  totalPages={paged.totalPages}
+                  from={paged.from}
+                  to={paged.to}
+                />
               </div>
             </>
           )}
-
-          <div className="panel p-3.5 card-enter">
-            <h3 className="font-display text-[0.95rem] font-semibold mb-3 text-hydro-ink">
-              Riwayat Data Sensor
-            </h3>
-
-            <div className="max-h-[240px] overflow-y-auto table-scroll border border-hydro-border rounded-lg">
-              <table className="w-full min-w-[640px] border-collapse text-[0.78rem]">
-                <thead className="sticky top-0 bg-hydro-accent-soft">
-                  <tr>
-                    <th className="border border-hydro-border p-2 text-center text-hydro-muted font-medium">Waktu</th>
-                    <th className="border border-hydro-border p-2 text-center text-hydro-muted font-medium">pH Level</th>
-                    <th className="border border-hydro-border p-2 text-center text-hydro-muted font-medium">EC/TDS (mS/cm)</th>
-                    <th className="border border-hydro-border p-2 text-center text-hydro-muted font-medium">Suhu °C</th>
-                    <th className="border border-hydro-border p-2 text-center text-hydro-muted font-medium">Kelembapan (%)</th>
-                    <th className="border border-hydro-border p-2 text-center text-hydro-muted font-medium">Cahaya (Lux)</th>
-                    <th className="border border-hydro-border p-2 text-center text-hydro-muted font-medium">Level Air (%)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="border border-hydro-border p-6 text-center text-hydro-muted">
-                        Tidak ada riwayat untuk tanggal ini.
-                      </td>
-                    </tr>
-                  ) : (
-                    rows.map((row) => (
-                      <tr key={`${row.date}-${row.waktu}`}>
-                        <td className="border border-hydro-border p-2 text-center">{row.waktu}</td>
-                        <td className="border border-hydro-border p-2 text-center">{row.ph}</td>
-                        <td className="border border-hydro-border p-2 text-center">{row.ec}</td>
-                        <td className="border border-hydro-border p-2 text-center">{row.suhu}</td>
-                        <td className="border border-hydro-border p-2 text-center">{row.kelembapan}</td>
-                        <td className="border border-hydro-border p-2 text-center">{row.cahaya}</td>
-                        <td className="border border-hydro-border p-2 text-center">{row.levelAir}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }

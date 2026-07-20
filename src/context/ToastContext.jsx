@@ -1,73 +1,158 @@
 /**
- * ToastContext — sistem notifikasi singkat di pojok kanan bawah.
- * Dipanggil lewat useToast().showToast("pesan", "success|info|warn|error")
- * Toast hilang otomatis setelah ~2.8 detik.
+ * ToastContext.jsx — sistem notifikasi singkat di tengah layar.
+ *
+ * Untuk apa:
+ * - Feedback aksi user (simpan setting, toggle perangkat, apply AI, dll)
+ * - Pemakaian: useToast().showToast("pesan", "success|info|warn|error|failed")
+ * - Hilang otomatis ~2.6 detik (tanpa tombol tutup)
  */
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import {
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Info,
+} from "lucide-react";
 
 const ToastContext = createContext(null);
 
-export function ToastProvider({ children }) {
-  // Daftar toast yang sedang tampil
-  const [toasts, setToasts] = useState([]);
+const ALERT_META = {
+  success: {
+    title: "Berhasil",
+    Icon: CheckCircle2,
+    iconWrap: "bg-hydro-accent-soft text-hydro-primary",
+    titleColor: "text-hydro-primary",
+    iconAnim: "alert-icon-success",
+  },
+  info: {
+    title: "Informasi",
+    Icon: Info,
+    iconWrap: "bg-hydro-accent-soft text-hydro-primary",
+    titleColor: "text-hydro-primary",
+    iconAnim: "alert-icon-info",
+  },
+  warn: {
+    title: "Peringatan",
+    Icon: AlertTriangle,
+    iconWrap: "bg-amber-50 text-hydro-warn",
+    titleColor: "text-hydro-warn",
+    iconAnim: "alert-icon-warn",
+  },
+  error: {
+    title: "Gagal",
+    Icon: XCircle,
+    iconWrap: "bg-red-50 text-hydro-danger",
+    titleColor: "text-hydro-danger",
+    iconAnim: "alert-icon-error",
+  },
+  failed: {
+    title: "Gagal",
+    Icon: XCircle,
+    iconWrap: "bg-red-50 text-hydro-danger",
+    titleColor: "text-hydro-danger",
+    iconAnim: "alert-icon-error",
+  },
+};
 
-  /** Hapus toast berdasarkan id */
-  const dismiss = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+export function ToastProvider({ children }) {
+  const [alert, setAlert] = useState(null);
+
+  const dismiss = useCallback(() => {
+    setAlert(null);
   }, []);
 
   /**
-   * Tampilkan toast baru.
-   * @param {string} message - teks notifikasi
-   * @param {"success"|"info"|"warn"|"error"} type - jenis/warna toast
+   * Tampilkan pemberitahuan tengah layar.
+   * @param {string} message
+   * @param {"success"|"info"|"warn"|"error"|"failed"} type
    */
-  const showToast = useCallback(
-    (message, type = "success") => {
-      const id = Date.now() + Math.random();
-      setToasts((prev) => [...prev, { id, message, type }]);
-      // Auto-dismiss
-      window.setTimeout(() => dismiss(id), 2800);
-    },
-    [dismiss]
-  );
+  const showToast = useCallback((message, type = "success") => {
+    const id = Date.now() + Math.random();
+    const normalized =
+      type === "failed"
+        ? "failed"
+        : type === "error"
+          ? "error"
+          : type === "warn" || type === "info" || type === "success"
+            ? type
+            : "info";
+
+    setAlert({ id, message, type: normalized });
+  }, []);
+
+  // Auto-dismiss
+  useEffect(() => {
+    if (!alert) return undefined;
+    const timer = window.setTimeout(() => {
+      setAlert((current) => (current?.id === alert.id ? null : current));
+    }, 2600);
+    return () => window.clearTimeout(timer);
+  }, [alert]);
+
+  const meta = alert ? ALERT_META[alert.type] || ALERT_META.info : null;
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, dismiss }}>
       {children}
 
-      {/* Area tampilan toast (fixed di kanan bawah) */}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-[min(360px,calc(100vw-2rem))]">
-        {toasts.map((toast) => (
+      {alert && meta && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none"
+          role="status"
+          aria-live="polite"
+        >
           <div
-            key={toast.id}
-            className={`
-              rounded-lg border px-3.5 py-2.5 text-[0.8rem] font-medium shadow-sm
-              backdrop-blur-md toast-enter
-              ${
-                toast.type === "error"
-                  ? "bg-white/95 border-hydro-danger/40 text-hydro-danger"
-                  : toast.type === "warn"
-                    ? "bg-white/95 border-hydro-warn/40 text-hydro-warn"
-                    : toast.type === "info"
-                      ? "bg-white/95 border-hydro-accent/50 text-hydro-primary"
-                      : "bg-white/95 border-hydro-primary/30 text-hydro-primary"
-              }
-            `}
-            role="status"
+            key={alert.id}
+            className="
+              pointer-events-none
+              w-full max-w-[300px]
+              bg-white/96 backdrop-blur-xl
+              border border-hydro-border rounded-2xl
+              shadow-[0_18px_44px_rgba(18,36,33,0.14)]
+              px-5 py-5
+              alert-pop
+            "
           >
-            {toast.message}
+            <div className="flex flex-col items-center text-center">
+              <div
+                className={`
+                  w-14 h-14 rounded-full
+                  inline-flex items-center justify-center
+                  ${meta.iconWrap}
+                  ${meta.iconAnim}
+                `}
+              >
+                <meta.Icon size={30} strokeWidth={2.25} />
+              </div>
+
+              <h3
+                className={`font-display font-semibold text-base mt-3 ${meta.titleColor}`}
+              >
+                {meta.title}
+              </h3>
+
+              <p className="text-[0.85rem] text-hydro-muted mt-1.5 leading-relaxed">
+                {alert.message}
+              </p>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </ToastContext.Provider>
   );
 }
 
-/** Hook untuk menampilkan toast dari halaman/komponen */
+/** Hook untuk menampilkan pemberitahuan dari halaman/komponen */
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) {
-    return { showToast: () => {} };
+    return { showToast: () => {}, dismiss: () => {} };
   }
   return ctx;
 }

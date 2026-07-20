@@ -1,18 +1,27 @@
 /**
  * Setting.jsx — halaman konfigurasi sistem SmartHydro-AI.
  *
- * Bagian:
- * 1. Ambang batas sensor (pH, EC, suhu, dll)
- * 2. Notifikasi (warning, error, AI, device)
- * 3. Koneksi IoT (nama node, interval, cloud)
- * 4. Pengaturan AI (aktif, horizon, model)
+ * Untuk apa:
+ * 1. Ambang batas sensor (min–max, dikelompokkan per parameter)
+ * 2. Kontrol rule-based + notifikasi (kolom kiri)
+ * 3. Koneksi IoT MQTT (kolom kanan)
+ * 4. AI Setting (decision support)
  *
- * Simpan/Reset masih lokal (belum API).
+ * Disimpan via SettingsContext → localStorage (belum API).
+ * Layout: PageShell.
  */
-import { useState } from "react";
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
+import { useEffect, useState } from "react";
+import { PageShell } from "../components/layout";
+import { ThemeSelect } from "../components/ui";
 import { useToast } from "../context/ToastContext";
+import {
+  useSettings,
+  DEFAULT_THRESHOLDS,
+  DEFAULT_NOTIFY,
+  DEFAULT_IOT,
+  DEFAULT_AI,
+  DEFAULT_CONTROL,
+} from "../context/SettingsContext";
 import {
   SlidersHorizontal,
   Bell,
@@ -20,51 +29,79 @@ import {
   Brain,
   Save,
   RotateCcw,
+  ShieldCheck,
+  Loader2,
 } from "lucide-react";
 
-/** Nilai default ambang batas sensor */
-const DEFAULT_THRESHOLDS = {
-  phMin: "5.5",
-  phMax: "6.5",
-  ecMin: "1.2",
-  ecMax: "2.0",
-  tempMax: "28",
-  humidityMin: "50",
-  lightMin: "300",
-  waterMin: "40",
-};
+const PLATFORM_OPTIONS = [
+  { value: "mqtt", label: "MQTT Broker" },
+  { value: "custom", label: "Custom / REST Dashboard" },
+];
 
-/** Default saklar notifikasi */
-const DEFAULT_NOTIFY = {
-  warning: true,
-  error: true,
-  ai: true,
-  device: false,
-};
+const HORIZON_OPTIONS = [
+  { value: "6", label: "6 jam" },
+  { value: "12", label: "12 jam" },
+  { value: "24", label: "24 jam" },
+];
 
-/** Default pengaturan IoT */
-const DEFAULT_IOT = {
-  deviceName: "SmartHydro-Node-01",
-  interval: "5",
-  cloud: true,
-};
+const MODEL_OPTIONS = [
+  { value: "regresi", label: "Regresi Linear" },
+  { value: "tree", label: "Decision Tree" },
+  { value: "threshold", label: "Klasifikasi Threshold" },
+];
 
-/** Default pengaturan modul AI */
-const DEFAULT_AI = {
-  enabled: true,
-  horizon: "24",
-  model: "regresi",
-};
+/** Pasangan min–max per parameter (layout ambang lebih rapi) */
+const THRESHOLD_GROUPS = [
+  {
+    title: "pH",
+    unit: "",
+    minKey: "phMin",
+    maxKey: "phMax",
+    hint: "Rentang optimal hidroponik",
+  },
+  {
+    title: "EC / TDS",
+    unit: "mS/cm",
+    minKey: "ecMin",
+    maxKey: "ecMax",
+  },
+  {
+    title: "Suhu",
+    unit: "°C",
+    minKey: "tempMin",
+    maxKey: "tempMax",
+  },
+  {
+    title: "Kelembapan",
+    unit: "%",
+    minKey: "humidityMin",
+    maxKey: "humidityMax",
+  },
+  {
+    title: "Cahaya",
+    unit: "Lux",
+    minKey: "lightMin",
+    maxKey: "lightMax",
+  },
+  {
+    title: "Level Air",
+    unit: "%",
+    minKey: "waterMin",
+    maxKey: "waterMax",
+  },
+];
 
-/** Komponen saklar ON/OFF kecil untuk setting */
-function Toggle({ checked, onChange }) {
+/** Toggle switch ON/OFF bertema SmartHydro */
+function Toggle({ checked, onChange, disabled = false }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`
-        relative w-11 h-6 rounded-full transition-all duration-300 cursor-pointer
+        relative w-11 h-6 rounded-full transition-all duration-300 cursor-pointer shrink-0
         ${checked ? "bg-hydro-primary" : "bg-hydro-border"}
+        ${disabled ? "opacity-40 cursor-not-allowed" : ""}
       `}
     >
       <span
@@ -77,344 +114,395 @@ function Toggle({ checked, onChange }) {
   );
 }
 
-/** Wrapper label + input + hint opsional */
+/** Label + kontrol form + hint opsional */
 function Field({ label, hint, children }) {
   return (
-    <div className="space-y-1.5">
-      <label className="block text-[0.8rem] font-medium text-hydro-ink">
+    <div className="space-y-1.5 min-w-0">
+      <label className="block text-[0.78rem] font-medium text-hydro-ink">
         {label}
       </label>
       {children}
-      {hint && (
-        <p className="text-[0.72rem] text-hydro-muted">{hint}</p>
-      )}
+      {hint ? (
+        <p className="text-[0.7rem] text-hydro-muted leading-snug">{hint}</p>
+      ) : null}
     </div>
   );
 }
 
-/** Class CSS bersama untuk input/select di halaman Setting */
+/** Baris toggle: judul + deskripsi kiri, switch kanan */
+function ToggleRow({ title, desc, checked, onChange, disabled }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="text-[0.84rem] text-hydro-ink font-medium leading-snug">
+          {title}
+        </p>
+        {desc ? (
+          <p className="text-[0.7rem] text-hydro-muted mt-0.5 leading-snug">
+            {desc}
+          </p>
+        ) : null}
+      </div>
+      <Toggle checked={checked} onChange={onChange} disabled={disabled} />
+    </div>
+  );
+}
+
 function inputClass() {
   return `
-    w-full border border-hydro-border rounded-lg
-    px-3 py-1.5 text-[0.8rem]
+    w-full border border-hydro-border rounded-xl
+    px-3 py-2 text-[0.8rem]
     bg-white/90 text-hydro-ink
-    focus:outline-none focus:border-hydro-accent
+    hover:border-hydro-accent hover:bg-hydro-accent-soft/70
+    focus:outline-none focus:border-hydro-accent focus:bg-hydro-accent-soft/70
+    focus:shadow-[0_0_0_3px_rgba(42,174,160,0.12)]
+    transition
   `;
+}
+
+/** Judul section biasa (ikon + teks) — tanpa panel-header berwarna */
+function SectionTitle({ icon, title, sub }) {
+  return (
+    <div className="mb-3">
+      <div className="flex items-center gap-2">
+        <span className="text-hydro-primary shrink-0">{icon}</span>
+        <h2 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
+          {title}
+        </h2>
+      </div>
+      {sub ? (
+        <p className="text-[0.75rem] text-hydro-muted mt-1.5 leading-snug">
+          {sub}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export default function Setting() {
   const { showToast } = useToast();
-  const [saved, setSaved] = useState(false); // flag teks "berhasil disimpan"
+  const savedSettings = useSettings();
 
-  // State tiap grup pengaturan
-  const [thresholds, setThresholds] = useState({ ...DEFAULT_THRESHOLDS });
-  const [notify, setNotify] = useState({ ...DEFAULT_NOTIFY });
-  const [iot, setIot] = useState({ ...DEFAULT_IOT });
-  const [ai, setAi] = useState({ ...DEFAULT_AI });
+  // Draft lokal — baru diterapkan ke context saat Simpan
+  const [thresholds, setThresholds] = useState({ ...savedSettings.thresholds });
+  const [notify, setNotify] = useState({ ...savedSettings.notify });
+  const [iot, setIot] = useState({ ...savedSettings.iot });
+  const [ai, setAi] = useState({ ...savedSettings.ai });
+  const [control, setControl] = useState({ ...savedSettings.control });
+  const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
-  /** Simpan pengaturan (simulasi lokal) */
-  const handleSave = () => {
-    setSaved(true);
-    showToast("Pengaturan berhasil disimpan.", "success");
-    window.setTimeout(() => setSaved(false), 2200);
+  // Sinkron draft jika context berubah dari luar
+  useEffect(() => {
+    setThresholds({ ...savedSettings.thresholds });
+    setNotify({ ...savedSettings.notify });
+    setIot({ ...savedSettings.iot });
+    setAi({ ...savedSettings.ai });
+    setControl({ ...savedSettings.control });
+  }, [
+    savedSettings.thresholds,
+    savedSettings.notify,
+    savedSettings.iot,
+    savedSettings.ai,
+    savedSettings.control,
+  ]);
+
+  const setThreshold = (key, value) => {
+    setThresholds((prev) => ({ ...prev, [key]: value }));
   };
 
-  /** Kembalikan semua field ke nilai default */
+  /** Simpan singkat — spinner di tombol saja, tanpa splash penuh */
+  const handleSave = () => {
+    if (saving || resetting) return;
+    setSaving(true);
+    window.setTimeout(() => {
+      savedSettings.saveAll({ thresholds, notify, iot, ai, control });
+      showToast("Setting berhasil disimpan.", "success");
+      setSaving(false);
+    }, 180);
+  };
+
   const handleReset = () => {
-    setThresholds({ ...DEFAULT_THRESHOLDS });
-    setNotify({ ...DEFAULT_NOTIFY });
-    setIot({ ...DEFAULT_IOT });
-    setAi({ ...DEFAULT_AI });
-    setSaved(false);
-    showToast("Pengaturan dikembalikan ke default.", "info");
+    if (saving || resetting) return;
+    setResetting(true);
+    window.setTimeout(() => {
+      setThresholds({ ...DEFAULT_THRESHOLDS });
+      setNotify({ ...DEFAULT_NOTIFY });
+      setIot({ ...DEFAULT_IOT });
+      setAi({ ...DEFAULT_AI });
+      setControl({ ...DEFAULT_CONTROL });
+      savedSettings.resetAll();
+      showToast("Setting dikembalikan ke default.", "info");
+      setResetting(false);
+    }, 180);
   };
 
   return (
-    <div className="flex h-screen overflow-hidden page-shell">
-      <Sidebar />
-
-      <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
-        <Navbar
-          title="Setting"
-          subtitle="Konfigurasi ambang batas, notifikasi, IoT, dan AI"
+    <PageShell
+      title="Setting"
+      subtitle="Konfigurasi ambang batas, notifikasi, IoT, dan AI"
+    >
+      {/* ===== 1. Ambang batas — dikelompokkan Min/Max per sensor ===== */}
+      <div className="panel p-3 sm:p-4 card-enter">
+        <SectionTitle
+          icon={<SlidersHorizontal size={16} />}
+          title="Ambang Batas Sensor"
+          sub="Dipakai untuk status Optimal/Perlu cek dan deteksi anomali (rule-based)."
         />
-
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 page-enter content-stagger">
-          {/* ===== 1. Ambang batas sensor ===== */}
-          <div className="panel p-3 sm:p-4 card-enter">
-            <div className="flex items-center gap-2 mb-3">
-              <SlidersHorizontal size={16} className="text-hydro-primary" />
-              <h2 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
-                Ambang Batas Sensor
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <Field label="pH Minimum" hint="Rentang optimal hidroponik">
-                <input
-                  className={inputClass()}
-                  value={thresholds.phMin}
-                  onChange={(e) =>
-                    setThresholds({ ...thresholds, phMin: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="pH Maksimum">
-                <input
-                  className={inputClass()}
-                  value={thresholds.phMax}
-                  onChange={(e) =>
-                    setThresholds({ ...thresholds, phMax: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="EC Minimum (mS/cm)">
-                <input
-                  className={inputClass()}
-                  value={thresholds.ecMin}
-                  onChange={(e) =>
-                    setThresholds({ ...thresholds, ecMin: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="EC Maksimum (mS/cm)">
-                <input
-                  className={inputClass()}
-                  value={thresholds.ecMax}
-                  onChange={(e) =>
-                    setThresholds({ ...thresholds, ecMax: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="Suhu Maksimum (°C)">
-                <input
-                  className={inputClass()}
-                  value={thresholds.tempMax}
-                  onChange={(e) =>
-                    setThresholds({ ...thresholds, tempMax: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="Kelembapan Minimum (%)">
-                <input
-                  className={inputClass()}
-                  value={thresholds.humidityMin}
-                  onChange={(e) =>
-                    setThresholds({ ...thresholds, humidityMin: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="Cahaya Minimum (Lux)">
-                <input
-                  className={inputClass()}
-                  value={thresholds.lightMin}
-                  onChange={(e) =>
-                    setThresholds({ ...thresholds, lightMin: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="Level Air Minimum (%)">
-                <input
-                  className={inputClass()}
-                  value={thresholds.waterMin}
-                  onChange={(e) =>
-                    setThresholds({ ...thresholds, waterMin: e.target.value })
-                  }
-                />
-              </Field>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {/* ===== 2. Notifikasi ===== */}
-            <div className="panel p-3 sm:p-4 card-enter">
-              <div className="flex items-center gap-2 mb-3">
-                <Bell size={16} className="text-hydro-primary" />
-                <h2 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
-                  Notifikasi
-                </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+          {THRESHOLD_GROUPS.map((group) => (
+            <div
+              key={group.title}
+              className="rounded-xl border border-hydro-border/80 bg-hydro-bg2/35 p-3"
+            >
+              <div className="flex items-baseline justify-between gap-2 mb-2.5">
+                <p className="text-[0.8rem] font-semibold text-hydro-ink">
+                  {group.title}
+                </p>
+                {group.unit ? (
+                  <span className="text-[0.68rem] text-hydro-muted tabular-nums">
+                    {group.unit}
+                  </span>
+                ) : null}
               </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[0.85rem] text-hydro-ink font-medium">Peringatan sensor</p>
-                    <p className="text-[0.72rem] text-hydro-muted">Saat parameter di luar ambang</p>
-                  </div>
-                  <Toggle
-                    checked={notify.warning}
-                    onChange={(v) => setNotify({ ...notify, warning: v })}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[0.85rem] text-hydro-ink font-medium">Error perangkat</p>
-                    <p className="text-[0.72rem] text-hydro-muted">Relay, pompa, atau koneksi gagal</p>
-                  </div>
-                  <Toggle
-                    checked={notify.error}
-                    onChange={(v) => setNotify({ ...notify, error: v })}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[0.85rem] text-hydro-ink font-medium">Rekomendasi AI</p>
-                    <p className="text-[0.72rem] text-hydro-muted">Prediksi nutrisi dan air</p>
-                  </div>
-                  <Toggle
-                    checked={notify.ai}
-                    onChange={(v) => setNotify({ ...notify, ai: v })}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[0.85rem] text-hydro-ink font-medium">Status aktuator</p>
-                    <p className="text-[0.72rem] text-hydro-muted">Setiap ON/OFF perangkat</p>
-                  </div>
-                  <Toggle
-                    checked={notify.device}
-                    onChange={(v) => setNotify({ ...notify, device: v })}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* ===== 3. Koneksi IoT ===== */}
-            <div className="panel p-3 sm:p-4 card-enter">
-              <div className="flex items-center gap-2 mb-3">
-                <Wifi size={16} className="text-hydro-primary" />
-                <h2 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
-                  Koneksi IoT
-                </h2>
-              </div>
-
-              <div className="space-y-3">
-                <Field label="Nama perangkat">
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Minimum">
                   <input
                     className={inputClass()}
-                    value={iot.deviceName}
+                    value={thresholds[group.minKey]}
                     onChange={(e) =>
-                      setIot({ ...iot, deviceName: e.target.value })
+                      setThreshold(group.minKey, e.target.value)
                     }
                   />
                 </Field>
-                <Field
-                  label="Interval kirim data (detik)"
-                  hint="Semakin kecil semakin real-time, tapi beban lebih besar"
-                >
+                <Field label="Maksimum">
                   <input
                     className={inputClass()}
-                    value={iot.interval}
+                    value={thresholds[group.maxKey]}
                     onChange={(e) =>
-                      setIot({ ...iot, interval: e.target.value })
+                      setThreshold(group.maxKey, e.target.value)
                     }
                   />
                 </Field>
-                <div className="flex items-center justify-between gap-3 pt-1">
-                  <div>
-                    <p className="text-[0.85rem] text-hydro-ink font-medium">Sinkronisasi cloud</p>
-                    <p className="text-[0.72rem] text-hydro-muted">Kirim data ke dashboard cloud</p>
-                  </div>
-                  <Toggle
-                    checked={iot.cloud}
-                    onChange={(v) => setIot({ ...iot, cloud: v })}
-                  />
-                </div>
               </div>
+              {group.hint ? (
+                <p className="text-[0.68rem] text-hydro-muted mt-2 leading-snug">
+                  {group.hint}
+                </p>
+              ) : null}
             </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ===== 2. Kiri: Kontrol + Notifikasi | Kanan: IoT ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+        <div className="space-y-3 min-w-0">
+          {/* Kontrol rule-based */}
+          <div className="panel p-3 sm:p-4 card-enter h-fit">
+            <SectionTitle
+              icon={<ShieldCheck size={16} />}
+              title="Kontrol Otomatis"
+              sub="Rule-based saat mode AUTO"
+            />
+            <ToggleRow
+              title="Aktuasi otomatis saat ambang kritis"
+              desc="Pompa, relay, dan servo merespons parameter di luar batas."
+              checked={control.autoRuleBased}
+              onChange={(v) => setControl({ ...control, autoRuleBased: v })}
+            />
           </div>
 
-          {/* ===== 4. Pengaturan AI ===== */}
-          <div className="panel p-3 sm:p-4 card-enter">
-            <div className="flex items-center gap-2 mb-3">
-              <Brain size={16} className="text-hydro-primary" />
-              <h2 className="font-display font-semibold text-[0.95rem] text-hydro-ink">
-                Pengaturan AI
-              </h2>
+          {/* Notifikasi */}
+          <div className="panel p-3 sm:p-4 card-enter h-fit">
+            <SectionTitle
+              icon={<Bell size={16} />}
+              title="Notifikasi"
+              sub="Jenis pemberitahuan yang ditampilkan"
+            />
+            <div className="divide-y divide-hydro-border/70">
+              <ToggleRow
+                title="Peringatan sensor"
+                desc="Saat parameter di luar ambang"
+                checked={notify.warning}
+                onChange={(v) => setNotify({ ...notify, warning: v })}
+              />
+              <ToggleRow
+                title="Error perangkat"
+                desc="Relay, pompa, atau koneksi gagal"
+                checked={notify.error}
+                onChange={(v) => setNotify({ ...notify, error: v })}
+              />
+              <ToggleRow
+                title="Rekomendasi AI"
+                desc="Prediksi nutrisi dan air"
+                checked={notify.ai}
+                onChange={(v) => setNotify({ ...notify, ai: v })}
+              />
+              <ToggleRow
+                title="Status aktuator"
+                desc="Setiap ON/OFF perangkat"
+                checked={notify.device}
+                onChange={(v) => setNotify({ ...notify, device: v })}
+              />
             </div>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="flex items-center justify-between gap-3 sm:col-span-1 bg-hydro-accent-soft/40 p-3 rounded-lg border border-hydro-border">
-                <div>
-                  <p className="text-[0.85rem] text-hydro-ink font-medium">Aktifkan prediksi AI</p>
-                  <p className="text-[0.72rem] text-hydro-muted">Decision support, bukan kontrol penuh</p>
-                </div>
-                <Toggle
-                  checked={ai.enabled}
-                  onChange={(v) => setAi({ ...ai, enabled: v })}
+        {/* Koneksi IoT */}
+        <div className="panel p-3 sm:p-4 card-enter h-fit min-w-0">
+          <SectionTitle
+            icon={<Wifi size={16} />}
+            title="Koneksi IoT"
+            sub="Pengaturan perangkat dan alamat server untuk pengiriman data sensor"
+          />
+          <div className="space-y-3">
+            <Field
+              label="Nama perangkat"
+              hint="Contoh: Greenhouse-1 atau Wemos D1"
+            >
+              <input
+                className={inputClass()}
+                value={iot.deviceName}
+                onChange={(e) =>
+                  setIot({ ...iot, deviceName: e.target.value })
+                }
+              />
+            </Field>
+            <Field
+              label="Platform IoT"
+              hint="Pilih cara perangkat terhubung ke sistem"
+            >
+              <ThemeSelect
+                value={iot.platform}
+                onChange={(v) => setIot({ ...iot, platform: v })}
+                options={PLATFORM_OPTIONS}
+                aria-label="Platform IoT"
+              />
+            </Field>
+            <div className="grid grid-cols-[1fr_5.5rem] gap-2.5">
+              <Field label="Alamat broker" hint="Contoh: broker.emqx.io">
+                <input
+                  className={inputClass()}
+                  value={iot.mqttBroker}
+                  onChange={(e) =>
+                    setIot({ ...iot, mqttBroker: e.target.value })
+                  }
                 />
-              </div>
-
-              <Field label="Horizon prediksi (jam)">
-                <select
-                  className={inputClass()}
-                  value={ai.horizon}
-                  onChange={(e) => setAi({ ...ai, horizon: e.target.value })}
-                  disabled={!ai.enabled}
-                >
-                  <option value="6">6 jam</option>
-                  <option value="12">12 jam</option>
-                  <option value="24">24 jam</option>
-                </select>
               </Field>
-
-              <Field label="Model dasar" hint="Sesuai proposal PDP: ML sederhana">
-                <select
+              <Field label="Port">
+                <input
                   className={inputClass()}
-                  value={ai.model}
-                  onChange={(e) => setAi({ ...ai, model: e.target.value })}
-                  disabled={!ai.enabled}
-                >
-                  <option value="regresi">Regresi Linear</option>
-                  <option value="tree">Decision Tree</option>
-                  <option value="threshold">Klasifikasi Threshold</option>
-                </select>
+                  value={iot.mqttPort ?? "1883"}
+                  onChange={(e) =>
+                    setIot({ ...iot, mqttPort: e.target.value })
+                  }
+                />
               </Field>
             </div>
-          </div>
-
-          {/* ===== Tombol simpan / reset ===== */}
-          <div className="panel p-3 sm:p-4 card-enter flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <p className="text-[0.8rem] text-hydro-muted">
-              {saved
-                ? "Pengaturan berhasil disimpan."
-                : "Ubah nilai lalu simpan. Integrasi API dapat ditambahkan nanti."}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="
-                  inline-flex items-center justify-center gap-2
-                  border border-hydro-border text-hydro-muted
-                  px-4 py-2 rounded-lg
-                  hover:border-hydro-accent hover:text-hydro-primary transition
-                  font-medium text-[0.8rem]
-                  cursor-pointer
-                "
-              >
-                <RotateCcw size={15} />
-                Reset Default
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                className="
-                  inline-flex items-center justify-center gap-2
-                  bg-hydro-primary text-white
-                  px-4 py-2 rounded-lg
-                  hover:bg-hydro-primary-hover transition
-                  font-medium text-[0.8rem]
-                  cursor-pointer
-                "
-              >
-                <Save size={15} />
-                Simpan Pengaturan
-              </button>
+            <Field
+              label="Interval kirim data (detik)"
+              hint="Seberapa sering data sensor dikirim"
+            >
+              <input
+                className={inputClass()}
+                value={iot.interval}
+                onChange={(e) =>
+                  setIot({ ...iot, interval: e.target.value })
+                }
+              />
+            </Field>
+            <div className="pt-1 border-t border-hydro-border/70">
+              <ToggleRow
+                title="Status koneksi"
+                desc="Aktifkan jika perangkat sudah terhubung"
+                checked={iot.cloud}
+                onChange={(v) => setIot({ ...iot, cloud: v })}
+              />
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* ===== 3. AI Setting ===== */}
+      <div className="panel p-3 sm:p-4 card-enter">
+        <SectionTitle
+          icon={<Brain size={16} />}
+          title="AI Setting"
+          sub="Decision support — prediksi kebutuhan nutrisi & air"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:items-stretch">
+          {/* Toggle AI — konten vertikal di tengah card */}
+          <div className="rounded-xl border border-hydro-border/80 bg-hydro-accent-soft/30 px-3 py-3 flex flex-col justify-center min-h-full">
+            <div className="divide-y divide-hydro-border/60">
+              <ToggleRow
+                title="Aktifkan prediksi AI"
+                desc="Early prediction kebutuhan nutrisi/air"
+                checked={ai.enabled}
+                onChange={(v) => setAi({ ...ai, enabled: v })}
+              />
+              <ToggleRow
+                title="Decision support only"
+                desc="Bukan kontrol penuh (TKT 3)"
+                checked={ai.decisionSupportOnly}
+                onChange={(v) => setAi({ ...ai, decisionSupportOnly: v })}
+                disabled={!ai.enabled}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 content-center">
+            <Field label="Horizon prediksi">
+              <ThemeSelect
+                value={ai.horizon}
+                onChange={(v) => setAi({ ...ai, horizon: v })}
+                options={HORIZON_OPTIONS}
+                disabled={!ai.enabled}
+                aria-label="Horizon prediksi"
+              />
+            </Field>
+            <Field label="Model dasar">
+              <ThemeSelect
+                value={ai.model}
+                onChange={(v) => setAi({ ...ai, model: v })}
+                options={MODEL_OPTIONS}
+                disabled={!ai.enabled}
+                aria-label="Model AI"
+              />
+            </Field>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Aksi simpan / reset ===== */}
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-0.5 pb-1">
+        <button
+          type="button"
+          onClick={handleReset}
+          disabled={saving || resetting}
+          className="btn-secondary"
+        >
+          {resetting ? (
+            <Loader2 size={15} className="animate-spin" />
+          ) : (
+            <RotateCcw size={15} />
+          )}
+          {resetting ? "Mereset..." : "Reset Default"}
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || resetting}
+          className="btn-primary"
+        >
+          {saving ? (
+            <Loader2 size={15} className="animate-spin" />
+          ) : (
+            <Save size={15} />
+          )}
+          {saving ? "Menyimpan..." : "Simpan Setting"}
+        </button>
+      </div>
+    </PageShell>
   );
 }
